@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using Dynamitey;
-using ImpromptuInterface;
+using MarshalByRefProxy;
 using Microsoft.CSharp.RuntimeBinder;
 using UnitTestSupportLibrary;
 
@@ -25,7 +25,7 @@ namespace UnitTestImpromptuInterface
         public void TestExposePrivateMethod()
         {
             var tTest = new TestWithPrivateMethod();
-            var tExposed = tTest.ActLike<IExposePrivateMethod>();
+            var tExposed = tTest.MarshalByRefAs<IExposePrivateMethod>();
             Assert.AreEqual(3, tExposed.Test()); 
         }
 
@@ -33,7 +33,7 @@ namespace UnitTestImpromptuInterface
         public void TestDoNotExposePrivateMethod()
         {
             var tTest = new TestWithPrivateMethod();
-            var tNonExposed =  new InvokeContext(tTest, this).ActLike<IExposePrivateMethod>();
+            var tNonExposed =  new InvokeContext(tTest, this).MarshalByRefAs<IExposePrivateMethod>();
             AssertException<RuntimeBinderException>(() => tNonExposed.Test());
         }
 

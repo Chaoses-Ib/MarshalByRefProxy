@@ -16,11 +16,11 @@ using System;
 using System.Collections.Generic;
 using System.Runtime.Serialization;
 using Microsoft.CSharp.RuntimeBinder;
-using ImpromptuInterface;
+using MarshalByRefProxy;
 using System.Dynamic;
 using Dynamitey;
 using Dynamitey.DynamicObjects;
-using ImpromptuInterface.Optimization;
+using MarshalByRefProxy.Optimization;
 
 #if !SELFRUNNER
 using NUnit.Framework;
@@ -38,15 +38,47 @@ namespace UnitTestImpromptuInterface
     [TestFixture]
     public class Basic : Helper
     {
+        public interface IProxyInterface
+        {
+            string GetCurrentAppDomainName();
+        }
 
+        class UnmarshallableClass : IProxyInterface
+        {
+            public string GetCurrentAppDomainName() => AppDomain.CurrentDomain.FriendlyName;
+        }
 
+        class ClassFactory : MarshalByRefObject
+        {
+            public IProxyInterface CreateInstance() => new UnmarshallableClass();
+
+            public IProxyInterface CreateMarshalByRefInstance() => new UnmarshallableClass().MarshalByRefAs<IProxyInterface>();
+        }
+
+        [Test]
+        public void CrossAppDomainTest()
+        {
+            IProxyInterface instance = new UnmarshallableClass();
+            Assert.AreEqual(AppDomain.CurrentDomain.FriendlyName, instance.GetCurrentAppDomainName());
+
+            IProxyInterface marshalByRefInstance = instance.MarshalByRefAs<IProxyInterface>();
+            Assert.AreEqual(AppDomain.CurrentDomain.FriendlyName, marshalByRefInstance.GetCurrentAppDomainName());
+
+            AppDomain domain = AppDomain.CreateDomain("TestDomain");            
+            ClassFactory factory = (ClassFactory)domain.CreateInstanceFromAndUnwrap(typeof(ClassFactory).Assembly.Location, typeof(ClassFactory).FullName);
+
+            Assert.Throws<System.Runtime.Serialization.SerializationException>(() => factory.CreateInstance().GetCurrentAppDomainName());
+
+            Assert.AreEqual("TestDomain", factory.CreateMarshalByRefInstance().GetCurrentAppDomainName());
+        }
+        
 
         [Test]
         public void AnonPropertyTest()
         {
             var tAnon = new { Prop1 = "Test", Prop2 = 42L, Prop3 = Guid.NewGuid() };
 
-            var tActsLike = tAnon.ActLike<ISimpeleClassProps>();
+            var tActsLike = tAnon.MarshalByRefAs<ISimpeleClassProps>();
 
 
             Assert.AreEqual(tAnon.Prop1, tActsLike.Prop1);
@@ -64,8 +96,8 @@ namespace UnitTestImpromptuInterface
             var tAnon = new { Prop1 = "Test 1", Prop2 = 42L, Prop3 = Guid.NewGuid() };
             var tAnon2 = new { Prop1 = "Test 2", Prop2 = 43L, Prop3 = Guid.NewGuid() };
 
-            var tActsLike = tAnon.ActLike<ISimpeleClassProps>();
-            var tActsLike2 = tAnon2.ActLike<ISimpeleClassProps>();
+            var tActsLike = tAnon.MarshalByRefAs<ISimpeleClassProps>();
+            var tActsLike2 = tAnon2.MarshalByRefAs<ISimpeleClassProps>();
 
             Assert.AreEqual(tActsLike.GetType(), tActsLike2.GetType());
 
@@ -84,8 +116,8 @@ namespace UnitTestImpromptuInterface
         {
             var tAnon = new { Prop1 = "Test 1", Prop2 = 42L, Prop3 = Guid.NewGuid() };
 
-            var tActsLike = tAnon.ActLike<ISimpeleClassProps>();
-            var tActsLike2 = tAnon.ActLike<ISimpeleClassProps>();
+            var tActsLike = tAnon.MarshalByRefAs<ISimpeleClassProps>();
+            var tActsLike2 = tAnon.MarshalByRefAs<ISimpeleClassProps>();
 
             Assert.AreEqual(tActsLike, tActsLike2);
 
@@ -101,7 +133,7 @@ namespace UnitTestImpromptuInterface
             tNew.Prop2 = 42L;
             tNew.Prop3 = Guid.NewGuid();
 
-            ISimpeleClassProps tActsLike = Impromptu.ActLike<ISimpeleClassProps>(tNew);
+            ISimpeleClassProps tActsLike = MarshalByRefProxy.MarshalByRefProxy.MarshalByRefAs<ISimpeleClassProps>(tNew);
 
 
 
@@ -123,7 +155,7 @@ namespace UnitTestImpromptuInterface
             dynamic tNew = new ExpandoObject();
 
 
-            ISimpeleSetClassProps tActsLike = Impromptu.ActLike<ISimpeleSetClassProps>(tNew);
+            ISimpeleSetClassProps tActsLike = MarshalByRefProxy.MarshalByRefProxy.MarshalByRefAs<ISimpeleSetClassProps>(tNew);
             tActsLike.Prop1 = prop1;
             tActsLike.Prop2 = prop2;
             tActsLike.Prop3 = prop3;
@@ -145,7 +177,7 @@ namespace UnitTestImpromptuInterface
             tNew.Prop2 = "42";
             tNew.Prop3 = Guid.NewGuid();
 
-            var tActsLike = Impromptu.ActLike<ISimpeleClassProps>(tNew);
+            var tActsLike = MarshalByRefProxy.MarshalByRefProxy.MarshalByRefAs<ISimpeleClassProps>(tNew);
 
 
 
@@ -166,7 +198,7 @@ namespace UnitTestImpromptuInterface
            expando.Add("★✪The Best Named Property in World!!☮", "yes");
 
 
-            var mapped = expando.ActLike<ITestAlias>();
+            var mapped = expando.MarshalByRefAs<ITestAlias>();
 
 
             Assert.AreEqual("Of Course!!!", mapped.CanYouHelpMe("hmmm"));
@@ -184,7 +216,7 @@ namespace UnitTestImpromptuInterface
             tNew.Prop3 = Guid.NewGuid();
             tNew.ReturnProp = new PropPoco();
 
-            IInheritProp tActsLike = Impromptu.ActLike<IInheritProp>(tNew, typeof(ISimpeleClassProps));
+            IInheritProp tActsLike = MarshalByRefProxy.MarshalByRefProxy.MarshalByRefAs<IInheritProp>(tNew, typeof(ISimpeleClassProps));
 
 
 
@@ -203,7 +235,7 @@ namespace UnitTestImpromptuInterface
             tNew.Nested = new ExpandoObject();
             tNew.Nested.NameLevel2 = "two";
 
-            INest tActsLike = Impromptu.ActLike<INest>(tNew);
+            INest tActsLike = MarshalByRefProxy.MarshalByRefProxy.MarshalByRefAs<INest>(tNew);
 
             Assert.AreEqual(tNew.NameLevel1, tActsLike.NameLevel1);
             Assert.AreEqual(tNew.Nested.NameLevel2, tActsLike.Nested.NameLevel2);
@@ -219,7 +251,7 @@ namespace UnitTestImpromptuInterface
             tNew.Nested = new ExpandoObject();
             tNew.Nested2 = new Func<object>(() => tNew2);
 
-            INonNest tActsLike = Impromptu.ActLike(tNew);
+            INonNest tActsLike = MarshalByRefProxy.MarshalByRefProxy.MarshalByRefAs(tNew);
 
             Assert.AreEqual(tNew.NameLevel1, tActsLike.NameLevel1);
             Assert.Throws<RuntimeBinderException>(() => { var tval= tActsLike.Nested; });
@@ -241,7 +273,7 @@ namespace UnitTestImpromptuInterface
             tNew.Nested2 = new Func<object>(() => tNew2);
             tNew.Nested.NameLevel2 = "two";
 
-            INonPartialNest tActsLike = Impromptu.ActLike(tNew);
+            INonPartialNest tActsLike = MarshalByRefProxy.MarshalByRefProxy.MarshalByRefAs(tNew);
 
             Assert.AreEqual(tNew.NameLevel1, tActsLike.NameLevel1);
             Assert.Throws<RuntimeBinderException>(() =>
@@ -261,7 +293,7 @@ namespace UnitTestImpromptuInterface
             tNew.Nested = new Func<object, object, object>((x, y) => tNew2);
             tNew.Nested(1, 2).NameLevel2 = "two";
 
-            INestMeth tActsLike = Impromptu.ActLike<INestMeth>(tNew);
+            INestMeth tActsLike = MarshalByRefProxy.MarshalByRefProxy.MarshalByRefAs<INestMeth>(tNew);
 
             Assert.AreEqual(tNew.NameLevel1, tActsLike.NameLevel1);
             Assert.AreEqual(tNew.Nested(1,2).NameLevel2, tActsLike.Nested(1,2).NameLevel2);
@@ -278,7 +310,7 @@ namespace UnitTestImpromptuInterface
             tNew.Prop3 = Guid.NewGuid();
             tNew.ReturnProp = new PropPoco();
 
-            IInheritProp tActsLike = Impromptu.ActLike<IInheritProp>(tNew, typeof(IPropPocoProp));
+            IInheritProp tActsLike = MarshalByRefProxy.MarshalByRefProxy.MarshalByRefAs<IInheritProp>(tNew, typeof(IPropPocoProp));
 
 
 
@@ -296,7 +328,7 @@ namespace UnitTestImpromptuInterface
             dynamic tNew = new ExpandoObject();
             tNew.Event = 3;
 
-            IEventCollisions tActsLike = Impromptu.ActLike<IEventCollisions>(tNew, typeof(IEvent));
+            IEventCollisions tActsLike = MarshalByRefProxy.MarshalByRefProxy.MarshalByRefAs<IEventCollisions>(tNew, typeof(IEvent));
 
 
             Assert.AreEqual(tNew.Event, tActsLike.Event);
@@ -309,7 +341,7 @@ namespace UnitTestImpromptuInterface
             dynamic tNew = new ExpandoObject();
             tNew.StartsWith = new Func<string, bool>(x => true);
 
-            ISimpleStringMethod tActsLike = Impromptu.ActLike<ISimpleStringMethod>(tNew, typeof(ISimpleStringMethod));
+            ISimpleStringMethod tActsLike = MarshalByRefProxy.MarshalByRefProxy.MarshalByRefAs<ISimpleStringMethod>(tNew, typeof(ISimpleStringMethod));
 
 
             Assert.AreEqual(tNew.StartsWith("test"), tActsLike.StartsWith("test"));
@@ -322,12 +354,12 @@ namespace UnitTestImpromptuInterface
             dynamic tNew = new ExpandoObject();
             tNew.StartsWith = new Func<string, bool>(x => true);
 
-            ISimpleStringMethod tActsLike = Impromptu.ActLike<ISimpleStringMethod>(tNew, typeof(ISimpleStringMethodCollision));
+            ISimpleStringMethod tActsLike = MarshalByRefProxy.MarshalByRefProxy.MarshalByRefAs<ISimpleStringMethod>(tNew, typeof(ISimpleStringMethodCollision));
             Assert.AreEqual(tNew.StartsWith("test"), tActsLike.StartsWith("test"));
 
             dynamic tNew2 = new ExpandoObject();
             tNew2.StartsWith = new Func<string, int>(x => 5);
-            ISimpleStringMethodCollision tActsLike2 = Impromptu.ActLike<ISimpleStringMethod>(tNew2, typeof(ISimpleStringMethodCollision));
+            ISimpleStringMethodCollision tActsLike2 = MarshalByRefProxy.MarshalByRefProxy.MarshalByRefAs<ISimpleStringMethod>(tNew2, typeof(ISimpleStringMethodCollision));
 
             Assert.AreEqual(tNew2.StartsWith("test"), tActsLike2.StartsWith("test"));
         }
@@ -342,7 +374,7 @@ namespace UnitTestImpromptuInterface
             tNew.Prop2 = "42";
             tNew.Prop3 = Guid.NewGuid();
 
-            IObjectStringIndexer tActsLike = Impromptu.ActLike<IObjectStringIndexer>(tNew);
+            IObjectStringIndexer tActsLike = MarshalByRefProxy.MarshalByRefProxy.MarshalByRefAs<IObjectStringIndexer>(tNew);
 
 
 
@@ -357,7 +389,7 @@ namespace UnitTestImpromptuInterface
 
             var tNew = new[] { "Test1", "Test2" };
 
-            var tActsLike = Impromptu.ActLike<IStringIntIndexer>(tNew);
+            var tActsLike = MarshalByRefProxy.MarshalByRefProxy.MarshalByRefAs<IStringIntIndexer>(tNew);
 
 
 
@@ -376,7 +408,7 @@ namespace UnitTestImpromptuInterface
                 Action3 = new Func<string>(() => "test"),
             };
 
-            ISimpeleClassMeth tActsLike = tNew.ActLike<ISimpeleClassMeth>();
+            ISimpeleClassMeth tActsLike = tNew.MarshalByRefAs<ISimpeleClassMeth>();
 
 
 
@@ -398,7 +430,7 @@ namespace UnitTestImpromptuInterface
             tNew.Action2 = new Action<bool>(Assert.IsFalse);
             tNew.Action3 = new Func<string>(() => "test");
 
-            ISimpeleClassMeth tActsLike = Impromptu.ActLike<ISimpeleClassMeth>(tNew);
+            ISimpeleClassMeth tActsLike = MarshalByRefProxy.MarshalByRefProxy.MarshalByRefAs<ISimpeleClassMeth>(tNew);
 
 
 
@@ -413,7 +445,7 @@ namespace UnitTestImpromptuInterface
         public void EventPocoPropertyTest()
         {
             var tPoco = new PocoEvent();
-            var tActsLike = tPoco.ActLike<IEvent>();
+            var tActsLike = tPoco.MarshalByRefAs<IEvent>();
             var tSet = false;
             tActsLike.Event += (obj, args) => tSet = true;
 
@@ -427,7 +459,7 @@ namespace UnitTestImpromptuInterface
         public void EventPocoPropertyTest2()
         {
             var tPoco = new PocoEvent();
-            var tActsLike = tPoco.ActLike<IEvent>();
+            var tActsLike = tPoco.MarshalByRefAs<IEvent>();
             var tSet = false;
             EventHandler<EventArgs> tActsLikeOnEvent = (obj, args) => tSet = true;
             tActsLike.Event += tActsLikeOnEvent;
@@ -441,7 +473,7 @@ namespace UnitTestImpromptuInterface
         public void EventDynamicPropertyTest()
         {
             object tPoco = Build.NewObject(Prop2: 3, Event: null, OnEvent: new ThisAction<object, EventArgs>((@this, obj, args) => @this.Event(obj, args)));
-            IEvent tActsLike = tPoco.ActLike<IEvent>();
+            IEvent tActsLike = tPoco.MarshalByRefAs<IEvent>();
             var tSet = false;
             tActsLike.Event += (obj, args) => tSet = true;
 
@@ -455,7 +487,7 @@ namespace UnitTestImpromptuInterface
         public void EventDynamicPropertyTest2()
         {
             object tPoco = Build.NewObject(Prop2: 3, Event: null, OnEvent: new ThisAction<object, EventArgs>((@this, obj, args) => @this.Event(obj, args)));
-            IEvent tActsLike = tPoco.ActLike<IEvent>();
+            IEvent tActsLike = tPoco.MarshalByRefAs<IEvent>();
             var tSet = false;
             EventHandler<EventArgs> tActsLikeOnEvent = (obj, args) => tSet = true;
             tActsLike.Event += tActsLikeOnEvent;
@@ -469,7 +501,7 @@ namespace UnitTestImpromptuInterface
         public void StringPropertyTest()
         {
             var tAnon = "Test 123";
-            var tActsLike = tAnon.ActLike<ISimpleStringProperty>();
+            var tActsLike = tAnon.MarshalByRefAs<ISimpleStringProperty>();
 
 
             Assert.AreEqual(tAnon.Length, tActsLike.Length);
@@ -479,7 +511,7 @@ namespace UnitTestImpromptuInterface
         public void StringMethodTest()
         {
             var tAnon = "Test 123";
-            var tActsLike = tAnon.ActLike<ISimpleStringMethod>();
+            var tActsLike = tAnon.MarshalByRefAs<ISimpleStringMethod>();
 
 
             Assert.AreEqual(tAnon.StartsWith("Te"), tActsLike.StartsWith("Te"));
@@ -489,7 +521,7 @@ namespace UnitTestImpromptuInterface
         public void DynamicArgMethodTest()
         {
             var tPoco = new PocoNonDynamicArg();
-            var tActsLike = tPoco.ActLike<IDynamicArg>();
+            var tActsLike = tPoco.MarshalByRefAs<IDynamicArg>();
 
             var tList = new List<string>();
 
@@ -503,7 +535,7 @@ namespace UnitTestImpromptuInterface
         public void DynamicArgMethodTest2()
         {
             dynamic tPoco = new PocoNonDynamicArg();
-            dynamic tActsLike = Impromptu.ActLike<IDynamicArg>(tPoco);
+            dynamic tActsLike = MarshalByRefProxy.MarshalByRefProxy.MarshalByRefAs<IDynamicArg>(tPoco);
 
 
 
@@ -524,7 +556,7 @@ namespace UnitTestImpromptuInterface
             dynamic tNew = new ExpandoObject();
             tNew.Prop1 = "Test";
             tNew.Prop2 = 42L;
-            var tActsLike = Impromptu.ActLikeProperties(tNew, new Dictionary<string, Type>() { { "Prop1", typeof(string) } });
+            var tActsLike = MarshalByRefProxy.MarshalByRefProxy.MarshalByRefAsProperties(tNew, new Dictionary<string, Type>() { { "Prop1", typeof(string) } });
 
 
             Assert.AreEqual(tNew.Prop1, tActsLike.Prop1);
@@ -538,7 +570,7 @@ namespace UnitTestImpromptuInterface
         public void OverloadMethodTest()
         {
             var tPoco = new OverloadingMethPoco();
-            var tActsLike = tPoco.ActLike<IOverloadingMethod>();
+            var tActsLike = tPoco.MarshalByRefAs<IOverloadingMethod>();
 
             var tValue = 1;
             Assert.AreEqual("int", tActsLike.Func(tValue));
@@ -549,7 +581,7 @@ namespace UnitTestImpromptuInterface
         public void OutMethodTest()
         {
             var tPoco = new MethOutPoco();
-            var tActsLike = tPoco.ActLike<IMethodOut>();
+            var tActsLike = tPoco.MarshalByRefAs<IMethodOut>();
 
             string tResult = String.Empty;
 
@@ -563,7 +595,7 @@ namespace UnitTestImpromptuInterface
         public void OutMethodTest2()
         {
             var tPoco = new GenericMethOutPoco();
-            var tActsLike = tPoco.ActLike<IMethodOut>();
+            var tActsLike = tPoco.MarshalByRefAs<IMethodOut>();
 
             string tResult = "success";
 
@@ -577,7 +609,7 @@ namespace UnitTestImpromptuInterface
         public void OutMethodTest3()
         {
             var tPoco = new GenericMethOutPoco();
-            var tActsLike = tPoco.ActLike<IMethodOut2>();
+            var tActsLike = tPoco.MarshalByRefAs<IMethodOut2>();
 
             int tResult = 3;
 
@@ -591,7 +623,7 @@ namespace UnitTestImpromptuInterface
         public void GenericMethodTest()
         {
             dynamic ot = new OtherThing();
-            IGenericTest test = Impromptu.ActLike(ot);
+            IGenericTest test = MarshalByRefProxy.MarshalByRefProxy.MarshalByRefAs(ot);
 
             var tResult =test.GetThings<Thing>(Guid.Empty);
 
@@ -605,7 +637,7 @@ namespace UnitTestImpromptuInterface
         public void GenericOutMethodTest()
         {
             var tPoco = new GenericMethOutPoco();
-            var tActsLike = tPoco.ActLike<IGenericMethodOut>();
+            var tActsLike = tPoco.MarshalByRefAs<IGenericMethodOut>();
 
             int tResult = 3;
 
@@ -626,7 +658,7 @@ namespace UnitTestImpromptuInterface
         public void RefMethodTest()
         {
             var tPoco = new MethRefPoco();
-            var tActsLike = tPoco.ActLike<IMethodRef>();
+            var tActsLike = tPoco.MarshalByRefAs<IMethodRef>();
 
             int tResult = 1;
 

@@ -28,7 +28,7 @@ using Microsoft.CSharp.RuntimeBinder;
 
 
 
-namespace ImpromptuInterface.Optimization
+namespace MarshalByRefProxy.Optimization
 {
     /// <summary>
     /// Utility Class

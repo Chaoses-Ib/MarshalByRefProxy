@@ -5,7 +5,7 @@ VisualStudioVersion = 15.0.26730.3
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "UnitTests", "UnitTests", "{983B9C01-EB2E-49E3-BB3E-A3FD41858F8C}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ImpromptuInterface", "ImpromptuInterface\ImpromptuInterface.csproj", "{DAB7C056-660A-4153-8FF2-B80A41310AD7}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MarshalByRefProxy", "MarshalByRefProxy\MarshalByRefProxy.csproj", "{DAB7C056-660A-4153-8FF2-B80A41310AD7}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UnitTestSupportLibrary", "Tests\UnitTestSupportLibrary\UnitTestSupportLibrary.csproj", "{0EC76091-958A-4020-BA6B-39B00EE55659}"
 EndProject

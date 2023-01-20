@@ -1,5 +1,5 @@
 ﻿using System;
-using ImpromptuInterface;
+using MarshalByRefProxy;
 
 namespace UnitTestImpromptuInterface
 {

@@ -5,7 +5,7 @@ using System.Dynamic;
 using System.Linq;
 using System.Runtime.Serialization;
 using System.Text;
-using ImpromptuInterface;
+using MarshalByRefProxy;
 
 #if !SELFRUNNER
 using NUnit.Framework;
@@ -39,7 +39,7 @@ namespace UnitTestImpromptuInterface
         {
             dynamic tNew = new ExpandoObject();
             tNew.Action = new Func<T, string>(it => it.ToString());
-            IGenericMeth tActsLike = Impromptu.ActLike<IGenericMeth>(tNew);
+            IGenericMeth tActsLike = MarshalByRefProxy.MarshalByRefProxy.MarshalByRefAs<IGenericMeth>(tNew);
 
             Assert.AreEqual(expected, tActsLike.Action(param));
         }
@@ -48,7 +48,7 @@ namespace UnitTestImpromptuInterface
         {
             dynamic tNew = new ExpandoObject();
             tNew.Action2 = new Func<T, T>(it => it);
-            IGenericMeth tActsLike = Impromptu.ActLike<IGenericMeth>(tNew);
+            IGenericMeth tActsLike = MarshalByRefProxy.MarshalByRefProxy.MarshalByRefAs<IGenericMeth>(tNew);
 
             Assert.AreEqual(param, tActsLike.Action2(param));
         }
@@ -67,7 +67,7 @@ namespace UnitTestImpromptuInterface
         {
             dynamic tNew = new ExpandoObject();
             tNew.Funct = new Func<T, string>(it => it.ToString());
-            IGenericType<T> tActsLike = Impromptu.ActLike<IGenericType<T>>(tNew);
+            IGenericType<T> tActsLike = MarshalByRefProxy.MarshalByRefProxy.MarshalByRefAs<IGenericType<T>>(tNew);
 
             Assert.AreEqual(expected, tActsLike.Funct(param));
         }
@@ -84,7 +84,7 @@ namespace UnitTestImpromptuInterface
         {
             dynamic tNew = new ExpandoObject();
             tNew.Funct = new Func<T, string>(it => it.ToString());
-            var tActsLike = Impromptu.ActLike<IGenericTypeConstraints<T>>(tNew);
+            var tActsLike = MarshalByRefProxy.MarshalByRefProxy.MarshalByRefAs<IGenericTypeConstraints<T>>(tNew);
 
             Assert.AreEqual(expected, tActsLike.Funct(param));
         }
@@ -104,7 +104,7 @@ namespace UnitTestImpromptuInterface
         {
             dynamic tNew = new ExpandoObject();
             tNew.Action = new Func<T, string>(it => it.ToString());
-            var tActsLike = Impromptu.ActLike<IGenericMethWithConstraints>(tNew);
+            var tActsLike = MarshalByRefProxy.MarshalByRefProxy.MarshalByRefAs<IGenericMethWithConstraints>(tNew);
 
             Assert.AreEqual(expected, tActsLike.Action(param));
         }
@@ -114,7 +114,7 @@ namespace UnitTestImpromptuInterface
         {
             dynamic tNew = new ExpandoObject();
             tNew.Action2 = new Func<T, string>(it => it.ToString());
-            var tActsLike = Impromptu.ActLike<IGenericMethWithConstraints>(tNew);
+            var tActsLike = MarshalByRefProxy.MarshalByRefProxy.MarshalByRefAs<IGenericMethWithConstraints>(tNew);
 
             Assert.AreEqual(expected, tActsLike.Action2(param));
         }

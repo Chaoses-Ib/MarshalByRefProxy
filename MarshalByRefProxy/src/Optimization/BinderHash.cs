@@ -19,7 +19,7 @@ using System.Linq;
 using System.Text;
 using Dynamitey;
 
-namespace ImpromptuInterface.Optimization
+namespace MarshalByRefProxy.Optimization
 {
     internal class BinderHash
     {

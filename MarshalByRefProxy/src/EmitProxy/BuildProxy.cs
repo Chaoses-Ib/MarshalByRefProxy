@@ -16,9 +16,9 @@
 using System.Collections;
 using System.Collections.ObjectModel;
 using System.Linq.Expressions;
-using ImpromptuInterface.Optimization;
+using MarshalByRefProxy.Optimization;
 
-namespace ImpromptuInterface.Build
+namespace MarshalByRefProxy.Build
 {
     using System;
     using System.Collections.Generic;
@@ -67,14 +67,14 @@ namespace ImpromptuInterface.Build
         private static readonly IDictionary<TypeHash, Type> _delegateCache = new Dictionary<TypeHash, Type>();
         private static readonly object DelegateCacheLock = new object();
 
-        private static readonly MethodInfo ActLike = typeof(BuildProxy).GetMethod("RecursiveActLike",
+        private static readonly MethodInfo MarshalByRefAs = typeof(BuildProxy).GetMethod("RecursiveMarshalByRefAs",
                                                                                   new[] {typeof(object)});
 
-        public static TInterface RecursiveActLike<TInterface>(object target) where TInterface:class
+        public static TInterface RecursiveMarshalByRefAs<TInterface>(object target) where TInterface:class
         {
           
 
-            return target.ActLike<TInterface>();
+            return target.MarshalByRefAs<TInterface>();
         }
 
 
@@ -154,6 +154,24 @@ namespace ImpromptuInterface.Build
 
         }
 
+        public static Type BuildType(Type contextType)
+        {
+            lock (TypeCacheLock)
+            {
+                contextType = contextType.FixContext();
+                var tNewHash = TypeHash.Create(contextType);
+                Type tType;
+                if (!_typeHash.TryGetValue(tNewHash, out tType))
+                {
+                    tType = BuildTypeHelper(Builder, contextType, new Type[] { });
+                    _typeHash[tNewHash] = tType;
+                }
+
+                return _typeHash[tNewHash];
+            }
+
+        }
+
         /// <summary>
         /// Builds the type.
         /// </summary>
@@ -179,22 +197,22 @@ namespace ImpromptuInterface.Build
         }
 
         /// <summary>
-        /// Preloads a proxy for ActLike to use.
+        /// Preloads a proxy for MarshalByRefAs to use.
         /// </summary>
         /// <param name="proxyType">Type of the proxy.</param>
-        /// <param name="attribute">The ActLikeProxyAttribute, if not provide it will be looked up.</param>
+        /// <param name="attribute">The MarshalByRefAsProxyAttribute, if not provide it will be looked up.</param>
         /// <returns>Returns false if there already is a proxy registered for the same type.</returns>
-        public static bool PreLoadProxy(Type proxyType, ActLikeProxyAttribute attribute = null)
+        public static bool PreLoadProxy(Type proxyType, MarshalByRefAsProxyAttribute attribute = null)
         {
             var tSuccess = true;
             if (attribute == null)
-                attribute = proxyType.GetCustomAttributes(typeof(ActLikeProxyAttribute), inherit: false).Cast<ActLikeProxyAttribute>().FirstOrDefault();
+                attribute = proxyType.GetCustomAttributes(typeof(MarshalByRefAsProxyAttribute), inherit: false).Cast<MarshalByRefAsProxyAttribute>().FirstOrDefault();
 
             if(attribute == null)
-                throw new Exception("Proxy Type must have ActLikeProxyAttribute");
+                throw new Exception("Proxy Type must have MarshalByRefAsProxyAttribute");
 
-            if (!typeof(IActLikeProxyInitialize).IsAssignableFrom(proxyType))
-                throw new Exception("Proxy Type must implement IActLikeProxyInitialize");
+            if (!typeof(IMarshalByRefAsProxyInitialize).IsAssignableFrom(proxyType))
+                throw new Exception("Proxy Type must implement IMarshalByRefAsProxyInitialize");
 
             foreach (var tIType in attribute.Interfaces)
             {
@@ -221,7 +239,7 @@ namespace ImpromptuInterface.Build
         }
 
         /// <summary>
-        /// Preloads proxies that ActLike uses from assembly.
+        /// Preloads proxies that MarshalByRefAs uses from assembly.
         /// </summary>
         /// <param name="assembly">The assembly.</param>
         /// <returns>Returns false if there already is a proxy registered for the same type.</returns>
@@ -230,9 +248,9 @@ namespace ImpromptuInterface.Build
             var tSuccess = true;
             var typesWithMyAttribute =
              from tType in assembly.GetTypes()
-             let tAttributes = tType.GetCustomAttributes(typeof(ActLikeProxyAttribute), inherit:false)
+             let tAttributes = tType.GetCustomAttributes(typeof(MarshalByRefAsProxyAttribute), inherit:false)
              where tAttributes != null && tAttributes.Length == 1
-             select new { Type = tType, Impromptu = tAttributes.Cast<ActLikeProxyAttribute>().Single() };
+             select new { Type = tType, Impromptu = tAttributes.Cast<MarshalByRefAsProxyAttribute>().Single() };
             foreach (var tTypeCombo in typesWithMyAttribute)
             {
                 lock (TypeCacheLock)
@@ -249,8 +267,8 @@ namespace ImpromptuInterface.Build
 
 
             var tB = builder.DefineType(
-                string.Format("ActLike_{0}_{1}", "InformalInterface", Guid.NewGuid().ToString("N")), TypeAttributes.Public | TypeAttributes.Class,
-                typeof(ActLikeProxy));
+                string.Format("MarshalByRefAs_{0}_{1}", "InformalInterface", Guid.NewGuid().ToString("N")), TypeAttributes.Public | TypeAttributes.Class,
+                typeof(MarshalByRefAsProxy));
 
 
 
@@ -326,11 +344,11 @@ namespace ImpromptuInterface.Build
 
             var tInterfacesMainList = interfaces.Distinct().ToArray();
             var tB = builder.DefineType(
-                string.Format("ActLike_{0}_{1}", tInterfacesMainList.First().Name, Guid.NewGuid().ToString("N")), TypeAttributes.Public | TypeAttributes.Class,
-                typeof(ActLikeProxy), tInterfacesMainList);
+                string.Format("AMarshalByRefAs_{0}_{1}", tInterfacesMainList.Count() > 0 ? tInterfacesMainList.First().Name : "", Guid.NewGuid().ToString("N")), TypeAttributes.Public | TypeAttributes.Class,
+                typeof(MarshalByRefAsProxy), tInterfacesMainList);
 
             tB.SetCustomAttribute(
-                new CustomAttributeBuilder(typeof(ActLikeProxyAttribute).GetConstructor(new[]{typeof(Type).MakeArrayType(),typeof(Type)}),
+                new CustomAttributeBuilder(typeof(MarshalByRefAsProxyAttribute).GetConstructor(new[]{typeof(Type).MakeArrayType(),typeof(Type)}),
                     new object[]{interfaces,contextType}));
             tB.SetCustomAttribute(new CustomAttributeBuilder(typeof(SerializableAttribute).GetConstructor(Type.EmptyTypes),new object[]{}));
 
@@ -763,7 +781,7 @@ namespace ImpromptuInterface.Build
             tIlGen.Emit(OpCodes.Ldfld, typeof(CallSite<>).MakeGenericType(emitInfo.CallSiteInvokeFuncType).GetFieldEvenIfGeneric("Target"));
             tIlGen.Emit(OpCodes.Ldsfld, tInvokeField);
             tIlGen.Emit(OpCodes.Ldarg_0);
-            tIlGen.Emit(OpCodes.Callvirt, typeof(IActLikeProxy).GetProperty("Original").GetGetMethod());
+            tIlGen.Emit(OpCodes.Callvirt, typeof(IMarshalByRefAsProxy).GetProperty("Original").GetGetMethod());
             for (var i = 1; i <= emitInfo.ResolvedParamTypes.Length; i++)
             {
 
@@ -775,7 +793,7 @@ namespace ImpromptuInterface.Build
                 tIlGen.EmitCallInvokeFunc(emitInfo.CallSiteConvertFuncType);
             }
 
-            //If we are recursing, try actlike
+            //If we are recursing, try MarshalByRefAs
             if (tRecurse)
             {
                 var tReturnLocal = tIlGen.DeclareLocal(typeof(object));
@@ -786,7 +804,7 @@ namespace ImpromptuInterface.Build
                     using (tIlGen.EmitBranchTrue(gen => gen.Emit(OpCodes.Isinst, emitInfo.ResolveReturnType)))
                     {
                         tIlGen.EmitLoadLocation(tReturnLocal.LocalIndex);
-                        tIlGen.Emit(OpCodes.Call, ActLike.MakeGenericMethod(emitInfo.ResolveReturnType));
+                        tIlGen.Emit(OpCodes.Call, MarshalByRefAs.MakeGenericMethod(emitInfo.ResolveReturnType));
                         tIlGen.Emit(OpCodes.Ret);
                     }
                 }
@@ -1005,7 +1023,7 @@ namespace ImpromptuInterface.Build
                     param => param.Emit(OpCodes.Ldsfld, tIsEventField),
                     param => param.EmitInvocation(
                         t => t.Emit(OpCodes.Ldarg_0),
-                        i => i.Emit(OpCodes.Callvirt, typeof(IActLikeProxy).GetProperty("Original").GetGetMethod())
+                        i => i.Emit(OpCodes.Callvirt, typeof(IMarshalByRefAsProxy).GetProperty("Original").GetGetMethod())
                                  )
                             )
                 )
@@ -1041,7 +1059,7 @@ namespace ImpromptuInterface.Build
                 tIlGen.Emit(OpCodes.Ldfld, tSetField.FieldType.GetFieldEvenIfGeneric("Target"));
                 tIlGen.Emit(OpCodes.Ldsfld, tSetField);
                 tIlGen.Emit(OpCodes.Ldarg_0);
-                tIlGen.Emit(OpCodes.Callvirt, typeof(IActLikeProxy).GetProperty("Original").GetGetMethod());
+                tIlGen.Emit(OpCodes.Callvirt, typeof(IMarshalByRefAsProxy).GetProperty("Original").GetGetMethod());
 
                 tIlGen.Emit(OpCodes.Ldsfld, tSubrtractAssignField);
                 tIlGen.Emit(OpCodes.Ldfld, tSubrtractAssignField.FieldType.GetFieldEvenIfGeneric("Target"));
@@ -1051,7 +1069,7 @@ namespace ImpromptuInterface.Build
                 tIlGen.Emit(OpCodes.Ldfld, tGetField.FieldType.GetFieldEvenIfGeneric("Target"));
                 tIlGen.Emit(OpCodes.Ldsfld, tGetField);
                 tIlGen.Emit(OpCodes.Ldarg_0);
-                tIlGen.Emit(OpCodes.Callvirt, typeof(IActLikeProxy).GetProperty("Original").GetGetMethod());
+                tIlGen.Emit(OpCodes.Callvirt, typeof(IMarshalByRefAsProxy).GetProperty("Original").GetGetMethod());
 
                 tIlGen.EmitCallInvokeFunc(tEmitInfo.CallSiteInvokeGetFuncType);
 
@@ -1082,7 +1100,7 @@ namespace ImpromptuInterface.Build
             tIlGen.Emit(OpCodes.Ldfld, tRemoveCallSiteField.FieldType.GetFieldEvenIfGeneric("Target"));
             tIlGen.Emit(OpCodes.Ldsfld, tRemoveCallSiteField);
             tIlGen.Emit(OpCodes.Ldarg_0);
-            tIlGen.Emit(OpCodes.Callvirt, typeof(IActLikeProxy).GetProperty("Original").GetGetMethod());
+            tIlGen.Emit(OpCodes.Callvirt, typeof(IMarshalByRefAsProxy).GetProperty("Original").GetGetMethod());
             tIlGen.Emit(OpCodes.Ldarg_1);
             tIlGen.EmitCallInvokeFunc(tEmitInfo.CallSiteRemoveFuncType);
             tIlGen.Emit(OpCodes.Pop);
@@ -1117,7 +1135,7 @@ namespace ImpromptuInterface.Build
                     param => param.Emit(OpCodes.Ldsfld, tIsEventField),
                     param => param.EmitInvocation(
                         t => t.Emit(OpCodes.Ldarg_0),
-                        i => i.Emit(OpCodes.Callvirt, typeof(IActLikeProxy).GetProperty("Original").GetGetMethod())
+                        i => i.Emit(OpCodes.Callvirt, typeof(IMarshalByRefAsProxy).GetProperty("Original").GetGetMethod())
                                  )
                             )
                 )
@@ -1153,7 +1171,7 @@ namespace ImpromptuInterface.Build
                 tIlGen.Emit(OpCodes.Ldfld, tSetField.FieldType.GetFieldEvenIfGeneric("Target"));
                 tIlGen.Emit(OpCodes.Ldsfld, tSetField);
                 tIlGen.Emit(OpCodes.Ldarg_0);
-                tIlGen.Emit(OpCodes.Callvirt, typeof(IActLikeProxy).GetProperty("Original").GetGetMethod());
+                tIlGen.Emit(OpCodes.Callvirt, typeof(IMarshalByRefAsProxy).GetProperty("Original").GetGetMethod());
 
                 tIlGen.Emit(OpCodes.Ldsfld, tAddAssigneField);
                 tIlGen.Emit(OpCodes.Ldfld, tAddAssigneField.FieldType.GetFieldEvenIfGeneric("Target"));
@@ -1163,7 +1181,7 @@ namespace ImpromptuInterface.Build
                 tIlGen.Emit(OpCodes.Ldfld, tGetField.FieldType.GetFieldEvenIfGeneric("Target"));
                 tIlGen.Emit(OpCodes.Ldsfld, tGetField);
                 tIlGen.Emit(OpCodes.Ldarg_0);
-                tIlGen.Emit(OpCodes.Callvirt, typeof(IActLikeProxy).GetProperty("Original").GetGetMethod());
+                tIlGen.Emit(OpCodes.Callvirt, typeof(IMarshalByRefAsProxy).GetProperty("Original").GetGetMethod());
 
                 tIlGen.EmitCallInvokeFunc(tEmitInfo.CallSiteInvokeGetFuncType);
 
@@ -1194,7 +1212,7 @@ namespace ImpromptuInterface.Build
             tIlGen.Emit(OpCodes.Ldfld, tAddCallSiteField.FieldType.GetFieldEvenIfGeneric("Target"));
             tIlGen.Emit(OpCodes.Ldsfld, tAddCallSiteField);
             tIlGen.Emit(OpCodes.Ldarg_0);
-            tIlGen.Emit(OpCodes.Callvirt, typeof(IActLikeProxy).GetProperty("Original").GetGetMethod());
+            tIlGen.Emit(OpCodes.Callvirt, typeof(IMarshalByRefAsProxy).GetProperty("Original").GetGetMethod());
             for (var i = 1; i <= tEmitInfo.ResolvedAddParamTypes.Length; i++)
             {
                 tIlGen.EmitLoadArgument(i);
@@ -1345,7 +1363,7 @@ namespace ImpromptuInterface.Build
             {
                 _callSiteName =
                     new Lazy<string>(
-                        () => string.Format("Impromptu_Callsite_{1}_{0}", Guid.NewGuid().ToString("N"), Name));
+                        () => string.Format("MarshalByRefProxy_Callsite_{1}_{0}", Guid.NewGuid().ToString("N"), Name));
             }
 
             private readonly Lazy<string> _callSiteName;
@@ -1434,7 +1452,7 @@ namespace ImpromptuInterface.Build
                 tIlGen.Emit(OpCodes.Ldfld, tInvokeGetCallsiteField.FieldType.GetFieldEvenIfGeneric("Target"));
                 tIlGen.Emit(OpCodes.Ldsfld, tInvokeGetCallsiteField);
                 tIlGen.Emit(OpCodes.Ldarg_0);
-                tIlGen.Emit(OpCodes.Callvirt, typeof(IActLikeProxy).GetProperty("Original").GetGetMethod());
+                tIlGen.Emit(OpCodes.Callvirt, typeof(IMarshalByRefAsProxy).GetProperty("Original").GetGetMethod());
                 for (var i = 1; i <= emitInfo.ResolvedIndexParamTypes.Length; i++)
                 {
                     tIlGen.EmitLoadArgument(i);
@@ -1450,7 +1468,7 @@ namespace ImpromptuInterface.Build
                 tIlGen.EmitStoreLocation(tReturnLocal.LocalIndex);
 
 
-                //If return type is interface and instance is not interface, try actlike
+                //If return type is interface and instance is not interface, try MarshalByRefAs
                 if (tRecurse)
                 {
                     using (tIlGen.EmitBranchFalse(gen => gen.EmitLoadLocation(tReturnLocal.LocalIndex)))
@@ -1459,7 +1477,7 @@ namespace ImpromptuInterface.Build
                         using (tIlGen.EmitBranchTrue(gen => gen.Emit(OpCodes.Isinst, emitInfo.ResolveReturnType)))
                         {
                             tIlGen.EmitLoadLocation(tReturnLocal.LocalIndex);
-                            tIlGen.Emit(OpCodes.Call, ActLike.MakeGenericMethod(emitInfo.ResolveReturnType));
+                            tIlGen.Emit(OpCodes.Call, MarshalByRefAs.MakeGenericMethod(emitInfo.ResolveReturnType));
                             tIlGen.Emit(OpCodes.Ret);
                         }
                     }
@@ -1499,7 +1517,7 @@ namespace ImpromptuInterface.Build
                 tIlGen.Emit(OpCodes.Ldfld, tSetCallsiteField.FieldType.GetFieldEvenIfGeneric("Target"));
                 tIlGen.Emit(OpCodes.Ldsfld, tSetCallsiteField);
                 tIlGen.Emit(OpCodes.Ldarg_0);
-                tIlGen.Emit(OpCodes.Callvirt, typeof(IActLikeProxy).GetProperty("Original").GetGetMethod());
+                tIlGen.Emit(OpCodes.Callvirt, typeof(IMarshalByRefAsProxy).GetProperty("Original").GetGetMethod());
                 for (var i = 1; i <= emitInfo.ResolvedParamTypes.Length; i++)
                 {
                     tIlGen.EmitLoadArgument(i);
@@ -1648,7 +1666,7 @@ namespace ImpromptuInterface.Build
 // ReSharper restore UnusedParameter.Local
         {
                 var tBuilder = Builder.DefineType(
-                    string.Format("Impromptu_{0}_{1}", "Delegate", Guid.NewGuid().ToString("N")),
+                    string.Format("MarshalByRefProxy_{0}_{1}", "Delegate", Guid.NewGuid().ToString("N")),
                     TypeAttributes.Class | TypeAttributes.AnsiClass | TypeAttributes.Sealed | TypeAttributes.Public,
                     typeof (MulticastDelegate));
 
@@ -1718,7 +1736,7 @@ namespace ImpromptuInterface.Build
                 {
 
                     var access = AssemblyBuilderAccess.Run;
-                    var tPlainName = "ImpromptuInterfaceDynamicAssembly";
+                    var tPlainName = "MarshalByRefProxyDynamicAssembly";
 
 
                     GenerateAssembly(tPlainName, access, ref _ab,ref _builder);

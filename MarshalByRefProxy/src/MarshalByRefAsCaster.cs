@@ -5,10 +5,9 @@ using System.Linq;
 using System.Runtime.Serialization;
 using System.Text;
 
-namespace ImpromptuInterface
+namespace MarshalByRefProxy
 {
-
-    public class ActLikeCaster: DynamicObject
+    public class MarshalByRefAsCaster : DynamicObject
     {
         public object Target { get; }
         private List<Type> _interfaceTypes;
@@ -20,7 +19,7 @@ namespace ImpromptuInterface
             if (binder.Type.IsInterface)
             {
                 _interfaceTypes.Insert(0, binder.Type);
-                result = Impromptu.DynamicActLike(Target, _interfaceTypes.ToArray());
+                result = MarshalByRefProxy.DynamicMarshalByRefAs(Target, _interfaceTypes.ToArray());
                 return true;
             }
 
@@ -33,7 +32,7 @@ namespace ImpromptuInterface
         }
 
 
-        public ActLikeCaster(object target, IEnumerable<Type> types)
+        public MarshalByRefAsCaster(object target, IEnumerable<Type> types)
         {
             Target = target;
             _interfaceTypes = types.ToList();

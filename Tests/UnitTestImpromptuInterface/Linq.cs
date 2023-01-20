@@ -6,7 +6,7 @@ using System.Reflection;
 using System.Text;
 using Dynamitey;
 using Dynamitey.DynamicObjects;
-using ImpromptuInterface;
+using MarshalByRefProxy;
 
 #if !NETCOREAPP2_0
 using IronPython.Hosting;
@@ -34,7 +34,7 @@ namespace UnitTestImpromptuInterface
         {
 
             var expected = Enumerable.Range(1, 10).Where(i => i > 5).Skip(1).Take(2).Max();
-            ILinq<int> linq = Impromptu.ActLike(Dynamic.Linq(Enumerable.Range(1, 10)));
+            ILinq<int> linq = MarshalByRefProxy.MarshalByRefProxy.MarshalByRefAs(Dynamic.Linq(Enumerable.Range(1, 10)));
             var actual = linq.Where(i => i > 5).Skip(1).Take(2).Max();
 
             Assert.AreEqual(expected,actual);
@@ -43,7 +43,7 @@ namespace UnitTestImpromptuInterface
         public void MoreGenericsLinq()
         {
             var expected = Enumerable.Range(1, 10).Select(i=> Tuple.Create(1,i)).Aggregate(0,(accum,each)=> each.Item2);
-            ILinq<int> linq = Impromptu.ActLike(Dynamic.Linq(Enumerable.Range(1, 10)));
+            ILinq<int> linq = MarshalByRefProxy.MarshalByRefProxy.MarshalByRefAs(Dynamic.Linq(Enumerable.Range(1, 10)));
             var actual = linq.Select(i => Tuple.Create(1, i)).Aggregate(0, (accum, each) => each.Item2);
 
             Assert.AreEqual(expected, actual);
@@ -97,7 +97,7 @@ namespace UnitTestImpromptuInterface
           {
 
               var expected = Enumerable.Range(1, 10).Where(x=> x < 5).OrderBy(x => 10 - x).First();
-              ILinq<int> linq = Impromptu.ActLike(Dynamic.Linq(Enumerable.Range(1, 10)));
+            ILinq<int> linq = MarshalByRefProxy.MarshalByRefProxy.MarshalByRefAs(Dynamic.Linq(Enumerable.Range(1, 10)));
               var actual = RunPythonHelper(linq,@"
 import System
 result = linq.Where.Overloads[System.Func[int, bool]](lambda x: x < 5).OrderBy(lambda x: 10-x).First()
@@ -110,7 +110,7 @@ result = linq.Where.Overloads[System.Func[int, bool]](lambda x: x < 5).OrderBy(l
           public void PythonLinqGenericArgs()
           {
               var start = new Object[] {1, "string", 4, Guid.Empty, 6};
-              ILinq<object> linq = Impromptu.ActLike(Dynamic.Linq(start));
+            ILinq<object> linq = MarshalByRefProxy.MarshalByRefProxy.MarshalByRefAs(Dynamic.Linq(start));
               var expected = start.OfType<int>().Skip(1).First();
               var actual = RunPythonHelper(linq, @"
 import System

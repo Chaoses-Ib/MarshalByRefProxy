@@ -1,0 +1,34 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFrameworks>net40;netstandard2.0</TargetFrameworks>
+    <SignAssembly>True</SignAssembly>
+    <AssemblyOriginatorKeyFile>sn.snk</AssemblyOriginatorKeyFile>
+    <Description>A library for marshalling any object by reference that do not require the object to inherit from MarshalByRefObject.</Description>
+    <Authors>Chaoses</Authors>
+    <Copyright>Copyright © Contributors 2023</Copyright>
+    <PackageProjectUrl>https://github.com/Chaoses-Ib/MarshalByRefProxy</PackageProjectUrl>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
+    <PackageRequireLicenseAcceptance>True</PackageRequireLicenseAcceptance>
+    <PackageIcon>ImpromptuInterface-Icon.png</PackageIcon>
+    <PackageTags>marshal dynamic .net40 proxy impromptu interface reflection dlr currying</PackageTags>
+    <IncludeSymbols>True</IncludeSymbols>
+    <IncludeSource>True</IncludeSource>
+    <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+    <RepositoryType>git</RepositoryType>
+    <RepositoryUrl>https://github.com/Chaoses-Ib/MarshalByRefProxy.git</RepositoryUrl>
+  </PropertyGroup>
+  <Import Project="..\Version.props" />
+  <ItemGroup>
+    <None Include="..\README.md" Pack="True" PackagePath="\" />
+    <None Include="..\graphics\ImpromptuInterface-Icon.png" Pack="True" PackagePath="\" />
+    <PackageReference Include="Dynamitey" Version="2.0.*" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(TargetFramework)'=='net40'">
+    <Reference Include="Microsoft.CSharp" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(TargetFramework)'=='netstandard2.0'">
+    <PackageReference Include="System.Reflection.Emit" Version="4.6.*" />
+    <PackageReference Include="Microsoft.CSharp" Version="4.6.*" />
+  </ItemGroup>
+</Project>

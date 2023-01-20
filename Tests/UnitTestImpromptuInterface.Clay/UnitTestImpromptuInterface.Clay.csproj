@@ -10,7 +10,7 @@
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>UnitTestImpromptuInterface.Clay</RootNamespace>
     <AssemblyName>UnitTestImpromptuInterface.Clay</AssemblyName>
-    <TargetFrameworkVersion>v4.6.2</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <SolutionDir Condition="$(SolutionDir) == '' Or $(SolutionDir) == '*Undefined*'">..\..\..\impromptuinterface\</SolutionDir>
     <RestorePackages>true</RestorePackages>
@@ -66,9 +66,9 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\ImpromptuInterface\ImpromptuInterface.csproj">
-      <Project>{DAB7C056-660A-4153-8FF2-B80A41310AD7}</Project>
-      <Name>ImpromptuInterface</Name>
+    <ProjectReference Include="..\..\MarshalByRefProxy\MarshalByRefProxy.csproj">
+      <Project>{dab7c056-660a-4153-8ff2-b80a41310ad7}</Project>
+      <Name>MarshalByRefProxy</Name>
     </ProjectReference>
     <ProjectReference Include="..\UnitTestSupportLibrary\UnitTestSupportLibrary.csproj">
       <Project>{0EC76091-958A-4020-BA6B-39B00EE55659}</Project>

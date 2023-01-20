@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace ImpromptuInterface
+namespace MarshalByRefProxy
 {
     /// <summary>
     /// Alias to swap method/property/event call name invoked on original

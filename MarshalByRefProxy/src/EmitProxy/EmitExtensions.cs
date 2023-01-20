@@ -15,7 +15,7 @@
 
 using System.Linq.Expressions;
 
-namespace ImpromptuInterface.Build
+namespace MarshalByRefProxy.Build
 {
     using System;
     using System.Collections.Generic;

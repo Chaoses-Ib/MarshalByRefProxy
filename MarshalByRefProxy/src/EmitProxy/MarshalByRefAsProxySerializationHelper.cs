@@ -4,7 +4,7 @@ using System.Linq;
 using System.Runtime.Serialization;
 using System.Text;
 
-namespace ImpromptuInterface.Build
+namespace MarshalByRefProxy.Build
 {
 #if !SILVERLIGHT
 
@@ -14,7 +14,7 @@ namespace ImpromptuInterface.Build
     /// Support Deserializing the proxy since on separate runs of an executable
     /// </summary>
     [Serializable]
-    public class ActLikeProxySerializationHelper : IObjectReference 
+    public class MarshalByRefAsProxySerializationHelper : IObjectReference 
     {
         /// <summary>
         /// Original Object
@@ -45,7 +45,7 @@ namespace ImpromptuInterface.Build
         {
 		   var tInterfaces = Interfaces ?? MonoInterfaces.Select(it=>Type.GetType(it)).ToArray();
            var tType =BuildProxy.BuildType(Context, tInterfaces.First(), tInterfaces.Skip(1).ToArray());
-           return Impromptu.InitializeProxy(tType, Original, tInterfaces);
+           return MarshalByRefProxy.InitializeProxy(tType, Original, tInterfaces);
         }
 
     }

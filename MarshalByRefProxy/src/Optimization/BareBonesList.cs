@@ -17,9 +17,9 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 
-namespace ImpromptuInterface.Optimization
+namespace MarshalByRefProxy.Optimization
 {
-    internal class BareBonesList<T>: ICollection<T>
+    internal class BareBonesList<T> : ICollection<T>
     {
         private T[] _list;
         private int _addIndex;

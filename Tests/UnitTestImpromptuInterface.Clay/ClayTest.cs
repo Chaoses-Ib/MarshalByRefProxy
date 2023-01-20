@@ -7,8 +7,8 @@ using ClaySharp;
 using ClaySharp.Behaviors;
 using Dynamitey;
 using Dynamitey.DynamicObjects;
-using ImpromptuInterface;
-using ImpromptuInterface.Optimization;
+using MarshalByRefProxy;
+using MarshalByRefProxy.Optimization;
 #if !SELFRUNNER
 using NUnit.Framework;
 #endif
@@ -31,7 +31,7 @@ namespace UnitTestImpromptuInterface
         [Test]
         public void InvokeMemberContainsNameWithImpromptuInterface()
         {
-            var clay = new Clay(new TestBehavior()).ActLike<ISimpeleClassMeth>();
+            var clay = new Clay(new TestBehavior()).MarshalByRefAs<ISimpeleClassMeth>();
             var result = clay.Action3();
             Assert.IsTrue(result.Contains("[name:Action3]"), "Does Not Match Argument Name");
             Assert.IsTrue(result.Contains("[count:0]"), "Does Not Match Argument Count");
@@ -135,13 +135,13 @@ namespace UnitTestImpromptuInterface
         {   
             dynamic New = new ClayFactory();
             IRobot tRobot = New.Robot().Name("Bender");
-            IRobot tRobotI = Impromptu.ActLike<IRobot>(New.Robot().Name("Bender"));
+            IRobot tRobotI = MarshalByRefProxy.MarshalByRefProxy.MarshalByRefAs<IRobot>(New.Robot().Name("Bender"));
          
              var tInteration = 50000;
              var tWatchC = TimeIt.Go(() =>
                                          {
                                              var tOut =
-                                                 Impromptu.ActLike<IRobot>(New.Robot().Name("Bender"));
+                                                 MarshalByRefProxy.MarshalByRefProxy.MarshalByRefAs<IRobot>(New.Robot().Name("Bender"));
                                          }, tInteration);
             var tWatchC2 = TimeIt.Go(() =>
                                          {
@@ -149,9 +149,9 @@ namespace UnitTestImpromptuInterface
                                          },tInteration );
            
             TestContext.WriteLine("*CreateInterface*");
-            TestContext.WriteLine("Impromptu: " + tWatchC.Elapsed);
+            TestContext.WriteLine("MarshalByRefProxy: " + tWatchC.Elapsed);
             TestContext.WriteLine("Clay: " + tWatchC2.Elapsed);
-            TestContext.WriteLine("Impromptu VS Clay: {0:0.0} x faster", (double)tWatchC2.ElapsedTicks / tWatchC.ElapsedTicks);
+            TestContext.WriteLine("MarshalByRefProxy VS Clay: {0:0.0} x faster", (double)tWatchC2.ElapsedTicks / tWatchC.ElapsedTicks);
             Assert.Less(tWatchC.Elapsed, tWatchC2.Elapsed);
 
             var tWatch = TimeIt.Go(() => { var tOut = tRobotI.Name; }, tInteration);
@@ -159,10 +159,10 @@ namespace UnitTestImpromptuInterface
             var tWatch2 = TimeIt.Go(() => { var tOut = tRobot.Name; }, tInteration);
             
             TestContext.WriteLine("*Get from Interface*");
-            TestContext.WriteLine("Impromptu: " + tWatch.Elapsed);
+            TestContext.WriteLine("MarshalByRefProxy: " + tWatch.Elapsed);
             TestContext.WriteLine("Clay: " + tWatch2.Elapsed);
 
-            TestContext.WriteLine("Impromptu VS Clay: {0:0.0} x faster", (double)tWatch2.ElapsedTicks / tWatch.ElapsedTicks);
+            TestContext.WriteLine("MarshalByRefProxy VS Clay: {0:0.0} x faster", (double)tWatch2.ElapsedTicks / tWatch.ElapsedTicks);
 
              Assert.Less(tWatch.Elapsed, tWatch2.Elapsed);
         }
@@ -200,19 +200,19 @@ namespace UnitTestImpromptuInterface
             {
                 var tOut = tRobotP.Name;
             });
-            TestContext.WriteLine("Impromptu: " + tWatchI.Elapsed);
+            TestContext.WriteLine("MarshalByRefProxy: " + tWatchI.Elapsed);
             TestContext.WriteLine("Clay: " + tWatchC.Elapsed);
             TestContext.WriteLine("Expando: " + tWatchE.Elapsed);
             TestContext.WriteLine("POCO: " + tWatchP.Elapsed);
 
             Assert.Less(tWatchI.Elapsed, tWatchC.Elapsed);
 
-            TestContext.WriteLine("Impromptu VS Clay: {0:0.0} x faster", (double)tWatchC.ElapsedTicks / tWatchI.ElapsedTicks);
+            TestContext.WriteLine("MarshalByRefProxy VS Clay: {0:0.0} x faster", (double)tWatchC.ElapsedTicks / tWatchI.ElapsedTicks);
             TestContext.WriteLine("Expando  VS Clay:{0:0.0}  x faster", (double)tWatchC.ElapsedTicks / tWatchE.ElapsedTicks);
             TestContext.WriteLine("POCO  VS Clay:{0:0.0}  x faster", (double)tWatchC.ElapsedTicks / tWatchP.ElapsedTicks);
-            TestContext.WriteLine("POCO  VS Impromptu:{0:0.0}  x faster", (double)tWatchI.ElapsedTicks / tWatchP.ElapsedTicks);
+            TestContext.WriteLine("POCO  VS MarshalByRefProxy:{0:0.0}  x faster", (double)tWatchI.ElapsedTicks / tWatchP.ElapsedTicks);
             TestContext.WriteLine("POCO  VS Expando:{0:0.0}  x faster", (double)tWatchE.ElapsedTicks / tWatchP.ElapsedTicks);
-            TestContext.WriteLine("Expando  VS Impromptu:{0:0.0}  x faster", (double)tWatchI.ElapsedTicks / tWatchE.ElapsedTicks);
+            TestContext.WriteLine("Expando  VS MarshalByRefProxy:{0:0.0}  x faster", (double)tWatchI.ElapsedTicks / tWatchE.ElapsedTicks);
         }
 
         //TestBehavoir from MS-PL ClaySharp http://clay.codeplex.com

@@ -16,19 +16,39 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.InteropServices.ComTypes;
-using ImpromptuInterface.Build;
-using ImpromptuInterface.Optimization;
+using MarshalByRefProxy.Build;
+using MarshalByRefProxy.Optimization;
 using Dynamitey;
-namespace ImpromptuInterface
+
+namespace MarshalByRefProxy
 {
     using System;
 
-    
     /// <summary>
     /// Main API
     /// </summary>
-    public static class Impromptu
+    public static class MarshalByRefProxy
     {
+        /*
+        public static T MarshalByRef<T>(this T originalInstance) where T : class
+        {
+            Type tContext;
+            bool tDummy;
+            object obj = originalInstance.GetTargetContext(out tContext, out tDummy);
+            tContext = tContext.FixContext();
+
+            var tProxy = BuildProxy.BuildType(tContext);
+
+            return
+                (T)
+                InitializeProxy(tProxy, obj, new Type[] { });
+        }
+
+        public static IEnumerable<T> AllMarshalByRef<T>(this IEnumerable<T> originalObjects) where T : class
+        {
+            return AllMarshalByRefAs<T>(originalObjects);
+        }
+        */
 
         /// <summary>
         /// Extension Method that Wraps an existing object with an Explicit interface definition
@@ -37,7 +57,7 @@ namespace ImpromptuInterface
         /// <param name="originalDynamic">The original object can be annoymous type, System.DynamicObject as well as any others.</param>
         /// <param name="otherInterfaces">Optional other interfaces.</param>
         /// <returns></returns>
-        public static TInterface ActLike<TInterface>(this object originalDynamic, params Type[] otherInterfaces) where TInterface : class
+        public static TInterface MarshalByRefAs<TInterface>(this object originalDynamic, params Type[] otherInterfaces) where TInterface : class
         {
             Type tContext;
             bool tDummy;
@@ -59,13 +79,13 @@ namespace ImpromptuInterface
         /// </summary>
         /// <param name="proxiedObject">The proxied object.</param>
         /// <returns></returns>
-        public static dynamic UndoActLike(this object proxiedObject)
+        public static dynamic UnmarshalByRef(this object proxiedObject)
         {
 
-            var actLikeProxy = proxiedObject as IActLikeProxy;
-            if (actLikeProxy != null)
+            var marshalByRefAsProxy = proxiedObject as IMarshalByRefAsProxy;
+            if (marshalByRefAsProxy != null)
             {
-                return actLikeProxy.Original;
+                return marshalByRefAsProxy.Original;
             }
             return proxiedObject;
         }
@@ -77,20 +97,20 @@ namespace ImpromptuInterface
         /// <param name="originalDynamic">The original dynamic.</param>
         /// <param name="otherInterfaces">The other interfaces.</param>
         /// <returns></returns>
-        public static dynamic ActLike(this object originalDynamic, params Type[] otherInterfaces)
+        public static dynamic MarshalByRefAs(this object originalDynamic, params Type[] otherInterfaces)
         {
-            return new ActLikeCaster(originalDynamic, otherInterfaces);
+            return new MarshalByRefAsCaster(originalDynamic, otherInterfaces);
         }
 
 
         public static TInterface Create<TTarget, TInterface>() where TTarget : new() where TInterface : class
         {
-            return new TTarget().ActLike<TInterface>();
+            return new TTarget().MarshalByRefAs<TInterface>();
         }
 
         public static TInterface Create<TTarget, TInterface>(params object[] args) where TInterface : class
         {
-            return  Impromptu.ActLike(Dynamic.InvokeConstructor(typeof(TTarget), args));
+            return  MarshalByRefProxy.MarshalByRefAs(Dynamic.InvokeConstructor(typeof(TTarget), args));
         }
 
 
@@ -100,7 +120,7 @@ namespace ImpromptuInterface
         /// <param name="originalDynamic">The original dynamic.</param>
         /// <param name="propertySpec">The property spec.</param>
         /// <returns></returns>
-        public static dynamic ActLikeProperties(this object originalDynamic, IDictionary<string, Type> propertySpec)
+        public static dynamic MarshalByRefAsProperties(this object originalDynamic, IDictionary<string, Type> propertySpec)
         {
             Type tContext;
             bool tDummy;
@@ -125,7 +145,7 @@ namespace ImpromptuInterface
         /// <returns></returns>
         internal static object InitializeProxy(Type proxytype, object original, IEnumerable<Type> interfaces =null, IDictionary<string, Type> propertySpec =null)
         {
-            var tProxy = (IActLikeProxyInitialize)Activator.CreateInstance(proxytype);
+            var tProxy = (IMarshalByRefAsProxyInitialize)Activator.CreateInstance(proxytype);
             tProxy.Initialize(original, interfaces, propertySpec);
             return tProxy;
         }
@@ -138,9 +158,9 @@ namespace ImpromptuInterface
         /// <param name="originalDynamic">The original dynamic.</param>
         /// <param name="otherInterfaces">The other interfaces.</param>
         /// <returns></returns>
-        public static IEnumerable<TInterface> AllActLike<TInterface>(this IEnumerable<object> originalDynamic, params Type[] otherInterfaces) where TInterface : class
+        public static IEnumerable<TInterface> AllMarshalByRefAs<TInterface>(this IEnumerable<object> originalDynamic, params Type[] otherInterfaces) where TInterface : class
         {
-            return originalDynamic.Select(it => it.ActLike<TInterface>(otherInterfaces));
+            return originalDynamic.Select(it => it.MarshalByRefAs<TInterface>(otherInterfaces));
         }
 
         /// <summary>
@@ -149,7 +169,7 @@ namespace ImpromptuInterface
         /// <param name="originalDynamic">The original dynamic.</param>
         /// <param name="otherInterfaces">The other interfaces.</param>
         /// <returns></returns>
-        public static dynamic DynamicActLike(object originalDynamic, params Type[] otherInterfaces)
+        public static dynamic DynamicMarshalByRefAs(object originalDynamic, params Type[] otherInterfaces)
         {
             Type tContext;
             bool tDummy;

@@ -17,21 +17,21 @@
 using System;
 
 
-namespace ImpromptuInterface.Build
+namespace MarshalByRefProxy.Build
 {
     /// <summary>
     /// Meta info describing proxy usage. Can be used to preload proxy.
     /// </summary>
     [AttributeUsage(AttributeTargets.Class)]
 	[Serializable]
-    public sealed class ActLikeProxyAttribute:Attribute
+    public sealed class MarshalByRefAsProxyAttribute : Attribute
     {
         /// <summary>
-        /// Initializes a new instance of the <see cref="ActLikeProxyAttribute"/> class.
+        /// Initializes a new instance of the <see cref="MarshalByRefAsProxyAttribute"/> class.
         /// </summary>
         /// <param name="interfaces">The interfaces.</param>
         /// <param name="context">The context.</param>
-        public ActLikeProxyAttribute(Type[] interfaces, Type context)
+        public MarshalByRefAsProxyAttribute(Type[] interfaces, Type context)
         {
             Interfaces = interfaces;
             Context = context;

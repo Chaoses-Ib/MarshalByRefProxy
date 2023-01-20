@@ -55,8 +55,8 @@ deploy:
       githubdeploy: true
 
 artifacts:
-  - path: ImpromptuInterface\bin\$(configuration)\*.nupkg
-    name: ImpromptuInterface
+  - path: MarshalByRefProxy\bin\$(configuration)\*.nupkg
+    name: MarshalByRefProxy
 
 for:
   - branches:

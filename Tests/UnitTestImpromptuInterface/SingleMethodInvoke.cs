@@ -23,12 +23,12 @@ using System.Text;
 using System.Xml.Linq;
 using Dynamitey;
 using Dynamitey.DynamicObjects;
-using ImpromptuInterface;
+using MarshalByRefProxy;
 using Binder = Microsoft.CSharp.RuntimeBinder.Binder;
 using BinderFlags = Microsoft.CSharp.RuntimeBinder.CSharpBinderFlags;
 using Info = Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo;
 using InfoFlags = Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfoFlags;
-using ImpromptuInterface.Optimization;
+using MarshalByRefProxy.Optimization;
 using Moq;
 
 #if !SELFRUNNER

@@ -13,12 +13,12 @@
 //    See the License for the specific language governing permissions and
 //    limitations under the License.
 
-namespace ImpromptuInterface
+namespace MarshalByRefProxy
 {
     /// <summary>
     /// This interface can be used to access the original content of your emitted type;
     /// </summary>
-    public interface IActLikeProxy
+    public interface IMarshalByRefAsProxy
     {
         ///<summary>
         /// Returns the proxied object

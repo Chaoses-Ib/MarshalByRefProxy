@@ -18,17 +18,17 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.Serialization;
 using Dynamitey.DynamicObjects;
-using ImpromptuInterface.Optimization;
+using MarshalByRefProxy.Optimization;
 
-namespace ImpromptuInterface.Build
+namespace MarshalByRefProxy.Build
 {
     /// <summary>
     /// This interface can be used to define your own custom proxy if you preload it.
     /// </summary>
     /// <remarks>
-    /// Advanced usage only! This is required as well as <see cref="ActLikeProxyAttribute"></see>
+    /// Advanced usage only! This is required as well as <see cref="MarshalByRefAsProxyAttribute"></see>
     /// </remarks>
-    public interface IActLikeProxyInitialize : IActLikeProxy
+    public interface IMarshalByRefAsProxyInitialize : IMarshalByRefAsProxy
     {
         ///<summary>
         /// Method used to Initialize Proxy
@@ -41,18 +41,17 @@ namespace ImpromptuInterface.Build
 
 
     /// <summary>
-    /// Base class of Emited ProxiesC:\Documents and Settings\jayt\My Documents\Visual Studio 2010\Projects\impromptuinterface\ImpromptuInterface\Optimization\
+    /// Base class of Emited Proxies
     /// </summary>
-    [Serializable]
-    public abstract class ActLikeProxy : IActLikeProxyInitialize, ISerializable
+    public abstract class MarshalByRefAsProxy : MarshalByRefObject, IMarshalByRefAsProxyInitialize, ISerializable
     {
         /// <summary>
         /// Returns the proxied object
         /// </summary>
         /// <value></value>
-        private dynamic ActLikeProxyOriginal { get; set; }
+        private dynamic MarshalByRefProxyOriginal { get; set; }
 
-        dynamic IActLikeProxy.Original { get { return ActLikeProxyOriginal; } }
+        dynamic IMarshalByRefAsProxy.Original { get { return MarshalByRefProxyOriginal; } }
 
         private bool _init = false;
 
@@ -62,7 +61,7 @@ namespace ImpromptuInterface.Build
         /// <param name="original"></param>
         /// <param name="interfaces"></param>
         /// <param name="informalInterface"></param>
-        void IActLikeProxyInitialize.Initialize(dynamic original, IEnumerable<Type> interfaces, IDictionary<string, Type> informalInterface)
+        void IMarshalByRefAsProxyInitialize.Initialize(dynamic original, IEnumerable<Type> interfaces, IDictionary<string, Type> informalInterface)
         {
             if(((object)original) == null)
                 throw new ArgumentNullException("original", "Can't proxy a Null value");
@@ -70,11 +69,11 @@ namespace ImpromptuInterface.Build
             if (_init)
                 throw new MethodAccessException("Initialize should not be called twice!");
             _init = true;
-            ActLikeProxyOriginal = original;
+            MarshalByRefProxyOriginal = original;
 
 
 
-            var dynamicObj = ActLikeProxyOriginal as IEquivalentType;
+            var dynamicObj = MarshalByRefProxyOriginal as IEquivalentType;
             if (dynamicObj != null)
             {
                 if (interfaces != null)
@@ -108,22 +107,22 @@ namespace ImpromptuInterface.Build
         {
             if (ReferenceEquals(null, obj)) return false;
             if (ReferenceEquals(this, obj)) return true;
-            if (ReferenceEquals(ActLikeProxyOriginal, obj)) return true;
-            if (!(obj is ActLikeProxy)) return ActLikeProxyOriginal.Equals(obj);
-            return Equals((ActLikeProxy) obj);
+            if (ReferenceEquals(MarshalByRefProxyOriginal, obj)) return true;
+            if (!(obj is MarshalByRefAsProxy)) return MarshalByRefProxyOriginal.Equals(obj);
+            return Equals((MarshalByRefAsProxy) obj);
         }
 
         /// <summary>
-        /// Actlike proxy should be equivalent to the objects they proxy
+        /// MarshalByRef proxy should be equivalent to the objects they proxy
         /// </summary>
         /// <param name="other">The other.</param>
         /// <returns></returns>
-        public bool Equals(ActLikeProxy other)
+        public bool Equals(MarshalByRefAsProxy other)
         {
             if (ReferenceEquals(null, other)) return false;
             if (ReferenceEquals(this, other)) return true;
-            if (ReferenceEquals(ActLikeProxyOriginal, other.ActLikeProxyOriginal)) return true;
-            return Equals(other.ActLikeProxyOriginal, ActLikeProxyOriginal);
+            if (ReferenceEquals(MarshalByRefProxyOriginal, other.MarshalByRefProxyOriginal)) return true;
+            return Equals(other.MarshalByRefProxyOriginal, MarshalByRefProxyOriginal);
         }
 
         /// <summary>
@@ -134,7 +133,7 @@ namespace ImpromptuInterface.Build
         /// </returns>
         public override int GetHashCode()
         {
-            return ActLikeProxyOriginal.GetHashCode();
+            return MarshalByRefProxyOriginal.GetHashCode();
         }
 
 #if !SILVERLIGHT
@@ -147,10 +146,10 @@ namespace ImpromptuInterface.Build
         /// <exception cref="T:System.Security.SecurityException">The caller does not have the required permission. </exception>
         public void GetObjectData(SerializationInfo info, StreamingContext context)
         {
-            info.SetType(typeof(ActLikeProxySerializationHelper));
+            info.SetType(typeof(MarshalByRefAsProxySerializationHelper));
 			
 		    var tCustomAttr =
-                GetType().GetCustomAttributes(typeof (ActLikeProxyAttribute), false).OfType<ActLikeProxyAttribute>().
+                GetType().GetCustomAttributes(typeof (MarshalByRefAsProxyAttribute), false).OfType<MarshalByRefAsProxyAttribute>().
                     FirstOrDefault();
 			
 				
@@ -173,7 +172,7 @@ namespace ImpromptuInterface.Build
 			}
 
 
-            info.AddValue("Original", (object)ActLikeProxyOriginal);
+            info.AddValue("Original", (object)MarshalByRefProxyOriginal);
 
         }
 #endif
@@ -186,7 +185,7 @@ namespace ImpromptuInterface.Build
         /// </returns>
         public override string ToString()
         {
-            return ActLikeProxyOriginal.ToString();
+            return MarshalByRefProxyOriginal.ToString();
         }
     }
 }

@@ -6,7 +6,7 @@ using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Text;
 using Dynamitey;
-using ImpromptuInterface;
+using MarshalByRefProxy;
 using Dynamitey.DynamicObjects;
 
 #if !SELFRUNNER
@@ -34,7 +34,7 @@ namespace UnitTestImpromptuInterface
             tNew.Prop2 = 42L;
             tNew.Prop3 = Guid.NewGuid();
 
-            var tActsLike = Impromptu.ActLike<ISimpeleClassProps>(tNew);
+            var tActsLike = MarshalByRefProxy.MarshalByRefProxy.MarshalByRefAs<ISimpeleClassProps>(tNew);
 
             Assert.AreEqual(tNew.Prop1, tActsLike.Prop1);
             Assert.AreEqual(tNew.Prop2, tActsLike.Prop2);
@@ -48,7 +48,7 @@ namespace UnitTestImpromptuInterface
             dynamic tNew = new Dictionary();
 
 
-            ISimpeleClassProps tActsLike = Impromptu.ActLike<ISimpeleClassProps>(tNew);
+            ISimpeleClassProps tActsLike = MarshalByRefProxy.MarshalByRefProxy.MarshalByRefAs<ISimpeleClassProps>(tNew);
 
             Assert.AreEqual(default(string), tActsLike.Prop1);
             Assert.AreEqual(default(long), tActsLike.Prop2);
@@ -84,7 +84,7 @@ namespace UnitTestImpromptuInterface
 			
             var tArray = new int[]{1,2,3};
 
-            IStringIntIndexer tTest =  Impromptu.Create<Get,IStringIntIndexer>(tArray);
+            IStringIntIndexer tTest = MarshalByRefProxy.MarshalByRefProxy.Create<Get, IStringIntIndexer>(tArray);
 
             Assert.AreEqual(tArray[2].ToString(), tTest[2]);
         }
@@ -92,7 +92,7 @@ namespace UnitTestImpromptuInterface
         [Test]
         public void GetterEventTest()
         {
-            var tActsLike = Impromptu.Create<Get,IEvent>(new PocoEvent());
+            var tActsLike = MarshalByRefProxy.MarshalByRefProxy.Create<Get, IEvent>(new PocoEvent());
             var tSet = false;
             tActsLike.Event += (obj, args) => tSet = true;
 
@@ -105,7 +105,7 @@ namespace UnitTestImpromptuInterface
         [Test]
         public void GetterEventTest2()
         {
-            var tActsLike = Impromptu.Create<Get,IEvent>(new PocoEvent());
+            var tActsLike = MarshalByRefProxy.MarshalByRefProxy.Create<Get, IEvent>(new PocoEvent());
             var tSet = false;
             EventHandler<EventArgs> tActsLikeOnEvent = (obj, args) => tSet = true;
             tActsLike.Event += tActsLikeOnEvent;
@@ -183,7 +183,7 @@ namespace UnitTestImpromptuInterface
             tNew.Action4 = new Func<int, string>(arg => "test" + arg);
 
 
-            ISimpeleClassMeth2 tActsLike = Impromptu.ActLike<ISimpeleClassMeth2>(tNew);
+            ISimpeleClassMeth2 tActsLike = MarshalByRefProxy.MarshalByRefProxy.MarshalByRefAs<ISimpeleClassMeth2>(tNew);
 
 
 
@@ -271,9 +271,9 @@ namespace UnitTestImpromptuInterface
             tNew.PropCat = "Cat-";
             tNew.Action1 = new Action(Assert.Fail);
             tNew.Action2 = new Action<bool>(Assert.IsFalse);
-            tNew.Action3 = new ThisFunc<string>(@this => @this.PropCat + "test"); 
+            tNew.Action3 = new ThisFunc<string>(@this => @this.PropCat + "test");
 
-            ISimpeleClassMeth tActsLike = Impromptu.ActLike<ISimpeleClassMeth>(tNew);
+            ISimpeleClassMeth tActsLike = MarshalByRefProxy.MarshalByRefProxy.MarshalByRefAs<ISimpeleClassMeth>(tNew);
 
 
 
@@ -291,7 +291,7 @@ namespace UnitTestImpromptuInterface
 
             dynamic tNew = new Dictionary();
 
-            ISimpleStringMethod tActsLike = Impromptu.ActLike<ISimpleStringMethod>(tNew);
+            ISimpleStringMethod tActsLike = MarshalByRefProxy.MarshalByRefProxy.MarshalByRefAs<ISimpleStringMethod>(tNew);
 
             Assert.AreEqual(false, tActsLike.StartsWith("Te"));
 
@@ -305,7 +305,7 @@ namespace UnitTestImpromptuInterface
 
             dynamic tNew = new Dictionary();
 
-            ISimpleStringMethod tActsLike = Impromptu.ActLike<ISimpleStringMethod>(tNew);
+            ISimpleStringMethod tActsLike = MarshalByRefProxy.MarshalByRefProxy.MarshalByRefAs<ISimpleStringMethod>(tNew);
 
             Assert.AreEqual(false, tActsLike.StartsWith("Te"));
 
@@ -356,8 +356,8 @@ namespace UnitTestImpromptuInterface
                                       }
                                   };
 
-            dynamic tDynamic = Impromptu.Create<Dictionary,IDynamicDict>(tDictionary);
-            dynamic tNotDynamic = Impromptu.Create<Dictionary,INonDynamicDict>(tDictionary);
+            dynamic tDynamic = MarshalByRefProxy.MarshalByRefProxy.Create<Dictionary, IDynamicDict>(tDictionary);
+            dynamic tNotDynamic = MarshalByRefProxy.MarshalByRefProxy.Create<Dictionary, INonDynamicDict>(tDictionary);
 
             Assert.AreEqual(tDynamic, tNotDynamic);
 
@@ -393,8 +393,8 @@ namespace UnitTestImpromptuInterface
                                       }
                                   };
 
-            dynamic tDynamic = Impromptu.Create<Dictionary,IDynamicDict>(tDictionary);
-            dynamic tNotDynamic = Impromptu.Create<Dictionary,INonDynamicDict>(tDictionary);
+            dynamic tDynamic = MarshalByRefProxy.MarshalByRefProxy.Create<Dictionary, IDynamicDict>(tDictionary);
+            dynamic tNotDynamic = MarshalByRefProxy.MarshalByRefProxy.Create<Dictionary, INonDynamicDict>(tDictionary);
 
             Assert.AreEqual(tDynamic, tNotDynamic);
 
@@ -429,13 +429,13 @@ namespace UnitTestImpromptuInterface
         [Test]
         public void TestAnonInterface()
         {
-            var tInterface = Impromptu.Create<Get,ICollection>(new
+            var tInterface = MarshalByRefProxy.MarshalByRefProxy.Create<Get, ICollection>(new
                                                                   {
-                                                                     CopyArray = ReturnVoid.Arguments<Array,int>((ar,i) => Enumerable.Range(1,10)),
+                                                                     CopyArray = ReturnVoid.Arguments<Array, int>((ar, i) => Enumerable.Range(1,10)),
                                                                      Count =  10,
                                                                      IsSynchronized = false,
                                                                      SyncRoot = this,
-                                                                     GetEnumerator = Return<IEnumerator>.Arguments(()=>Enumerable.Range(1, 10).GetEnumerator())
+                                                                     GetEnumerator = Return<IEnumerator>.Arguments(()=> Enumerable.Range(1, 10).GetEnumerator())
                                                                   });
 
             Assert.AreEqual(10, tInterface.Count);
@@ -551,7 +551,7 @@ namespace UnitTestImpromptuInterface
 		[Test]
 		public void TestBuilderActLikeAnon()
 		{
-		    var New = Builder.New().ActLike<IBuilder>();
+		    var New = Builder.New().MarshalByRefAs<IBuilder>();
 
 		var tNest =New.Nester(new {
 				NameLevel1 = "Lvl1",
@@ -567,7 +567,7 @@ namespace UnitTestImpromptuInterface
         [Test]
         public void TestBuilderActLikeNamed()
         {
-            var New = Builder.New().ActLike<IBuilder>();
+            var New = Builder.New().MarshalByRefAs<IBuilder>();
 
             var tNest = New.Nester(
                 NameLevel1 :"Lvl1",
