@@ -1,6 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFrameworks>net40;netstandard2.0</TargetFrameworks>
+    <TargetFrameworks>net40</TargetFrameworks>
     <SignAssembly>True</SignAssembly>
     <AssemblyOriginatorKeyFile>sn.snk</AssemblyOriginatorKeyFile>
     <Description>A library for marshalling any object by reference that do not require the object to inherit from MarshalByRefObject.</Description>
@@ -30,5 +30,10 @@
   <ItemGroup Condition="'$(TargetFramework)'=='netstandard2.0'">
     <PackageReference Include="System.Reflection.Emit" Version="4.6.*" />
     <PackageReference Include="Microsoft.CSharp" Version="4.6.*" />
+  </ItemGroup>
+  <ItemGroup>
+    <Reference Include="mscorlib">
+      <HintPath>..\..\..\..\..\..\..\..\Program Files (x86)\Reference Assemblies\Microsoft\Framework\.NETFramework\v4.8\mscorlib.dll</HintPath>
+    </Reference>
   </ItemGroup>
 </Project>

@@ -14,7 +14,6 @@
 //    limitations under the License.
 using System;
 using System.Collections.Generic;
-using System.Runtime.Serialization;
 using Microsoft.CSharp.RuntimeBinder;
 using MarshalByRefProxy;
 using System.Dynamic;
@@ -38,39 +37,7 @@ namespace UnitTestImpromptuInterface
     [TestFixture]
     public class Basic : Helper
     {
-        public interface IProxyInterface
-        {
-            string GetCurrentAppDomainName();
-        }
 
-        class UnmarshallableClass : IProxyInterface
-        {
-            public string GetCurrentAppDomainName() => AppDomain.CurrentDomain.FriendlyName;
-        }
-
-        class ClassFactory : MarshalByRefObject
-        {
-            public IProxyInterface CreateInstance() => new UnmarshallableClass();
-
-            public IProxyInterface CreateMarshalByRefInstance() => new UnmarshallableClass().MarshalByRefAs<IProxyInterface>();
-        }
-
-        [Test]
-        public void CrossAppDomainTest()
-        {
-            IProxyInterface instance = new UnmarshallableClass();
-            Assert.AreEqual(AppDomain.CurrentDomain.FriendlyName, instance.GetCurrentAppDomainName());
-
-            IProxyInterface marshalByRefInstance = instance.MarshalByRefAs<IProxyInterface>();
-            Assert.AreEqual(AppDomain.CurrentDomain.FriendlyName, marshalByRefInstance.GetCurrentAppDomainName());
-
-            AppDomain domain = AppDomain.CreateDomain("TestDomain");            
-            ClassFactory factory = (ClassFactory)domain.CreateInstanceFromAndUnwrap(typeof(ClassFactory).Assembly.Location, typeof(ClassFactory).FullName);
-
-            Assert.Throws<System.Runtime.Serialization.SerializationException>(() => factory.CreateInstance().GetCurrentAppDomainName());
-
-            Assert.AreEqual("TestDomain", factory.CreateMarshalByRefInstance().GetCurrentAppDomainName());
-        }
         
 
         [Test]

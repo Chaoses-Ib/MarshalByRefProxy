@@ -5,7 +5,7 @@ A .NET library for marshalling any object by reference that do not require the o
 
 This project is based on [ImpromptuInterface](https://github.com/ekonbenefits/impromptu-interface).
 
-## Usage
+## Basic usage
 ```csharp
 using MarshalByRefAsProxy;
 
@@ -27,7 +27,7 @@ class ClassFactory : MarshalByRefObject
 }
 
 [Test]
-public void CrossAppDomainTest()
+public void TestCrossAppDomain()
 {
     IProxyInterface instance = new UnmarshallableClass();
     Assert.AreEqual(AppDomain.CurrentDomain.FriendlyName, instance.GetCurrentAppDomainName());
@@ -41,5 +41,30 @@ public void CrossAppDomainTest()
     Assert.Throws<System.Runtime.Serialization.SerializationException>(() => factory.CreateInstance().GetCurrentAppDomainName());
 
     Assert.AreEqual("TestDomain", factory.CreateMarshalByRefInstance().GetCurrentAppDomainName());
+}
+```
+
+## Task
+```csharp
+class TaskTest : MarshalByRefObject
+{
+    // Cannot be an async method
+    // The return type cannot be IAwaitable<T>
+    public IAwaitable GetCurrentAppDomainNameAsync()
+    {
+        Task.Delay(1000).Wait();
+        // IAwaitable is defined by MarshalByRefProxy
+        return Task.Run(() => AppDomain.CurrentDomain.FriendlyName).MarshalByRefAs<IAwaitable>();
+    }
+}        
+
+[Test]
+public async Task TestTask()
+{
+    AppDomain domain = AppDomain.CreateDomain("TestDomain");
+    TaskTest test = (TaskTest)domain.CreateInstanceFromAndUnwrap(typeof(TaskTest).Assembly.Location, typeof(TaskTest).FullName);
+
+    string name = (string)await test.GetCurrentAppDomainNameAsync();
+    Assert.AreEqual("TestDomain", name);
 }
 ```
