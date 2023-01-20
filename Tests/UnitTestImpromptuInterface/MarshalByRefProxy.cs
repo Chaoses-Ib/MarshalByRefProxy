@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using System.Runtime.Serialization;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -38,11 +39,14 @@ namespace UnitTestImpromptuInterface
             IProxyInterface marshalByRefInstance = instance.MarshalByRefAs<IProxyInterface>();
             Assert.AreEqual(AppDomain.CurrentDomain.FriendlyName, marshalByRefInstance.GetCurrentAppDomainName());
 
+            // Create an application domain named TestDomain
             AppDomain domain = AppDomain.CreateDomain("TestDomain");
             ClassFactory factory = (ClassFactory)domain.CreateInstanceFromAndUnwrap(typeof(ClassFactory).Assembly.Location, typeof(ClassFactory).FullName);
 
-            Assert.Throws<System.Runtime.Serialization.SerializationException>(() => factory.CreateInstance().GetCurrentAppDomainName());
+            // Try to marshal an unmarshallable object, which throws a SerializationException
+            Assert.Throws<SerializationException>(() => factory.CreateInstance().GetCurrentAppDomainName());
 
+            // Try to marshal an unmarshallable object via MarshalByRefProxy, which works fine
             Assert.AreEqual("TestDomain", factory.CreateMarshalByRefInstance().GetCurrentAppDomainName());
         }
 

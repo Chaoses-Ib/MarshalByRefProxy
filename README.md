@@ -14,6 +14,8 @@ public interface IProxyInterface
     string GetCurrentAppDomainName();
 }
 
+// UnmarshallableClass is not required to inherit from IProxyInterface.
+// Here we inherit from IProxyInterface just to be able to call CreateInstance() for comparison.
 class UnmarshallableClass : IProxyInterface
 {
     public string GetCurrentAppDomainName() => AppDomain.CurrentDomain.FriendlyName;
@@ -29,17 +31,14 @@ class ClassFactory : MarshalByRefObject
 [Test]
 public void TestCrossAppDomain()
 {
-    IProxyInterface instance = new UnmarshallableClass();
-    Assert.AreEqual(AppDomain.CurrentDomain.FriendlyName, instance.GetCurrentAppDomainName());
-
-    IProxyInterface marshalByRefInstance = instance.MarshalByRefAs<IProxyInterface>();
-    Assert.AreEqual(AppDomain.CurrentDomain.FriendlyName, marshalByRefInstance.GetCurrentAppDomainName());
-
-    AppDomain domain = AppDomain.CreateDomain("TestDomain");            
+    // Create an application domain named TestDomain
+    AppDomain domain = AppDomain.CreateDomain("TestDomain");
     ClassFactory factory = (ClassFactory)domain.CreateInstanceFromAndUnwrap(typeof(ClassFactory).Assembly.Location, typeof(ClassFactory).FullName);
 
-    Assert.Throws<System.Runtime.Serialization.SerializationException>(() => factory.CreateInstance().GetCurrentAppDomainName());
+    // Try to marshal an unmarshallable object, which throws a SerializationException
+    Assert.Throws<SerializationException>(() => factory.CreateInstance().GetCurrentAppDomainName());
 
+    // Try to marshal an unmarshallable object via MarshalByRefProxy, which works fine
     Assert.AreEqual("TestDomain", factory.CreateMarshalByRefInstance().GetCurrentAppDomainName());
 }
 ```
@@ -68,3 +67,9 @@ public async Task TestTask()
     Assert.AreEqual("TestDomain", name);
 }
 ```
+Why can we await `IAwaitable`? Because C# can await any [awaitable expressions](https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/language-specification/expressions#11882-awaitable-expressions), which is exactly what `IAwaitable` stands for.
+
+## Todos
+- [ ] `IAwaitable<T>`
+- [ ] MarshalByRefWrapper Code Generators
+- [ ] MarshalByRefObject Code Generators
