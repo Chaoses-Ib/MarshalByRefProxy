@@ -30,7 +30,7 @@ namespace MarshalByRefProxy.Build
 
 
 
-#if NET40
+#if NETFRAMEWORK
     internal static class CompatHelper
     {
         public static Type GetTypeInfo(this Type type) => type;
@@ -78,7 +78,7 @@ namespace MarshalByRefProxy.Build
         }
 
 
-#if NET40
+#if NETFRAMEWORK
 
         internal class TempBuilder : IDisposable
         {
@@ -136,7 +136,12 @@ namespace MarshalByRefProxy.Build
         /// <param name="mainInterface">The main interface.</param>
         /// <param name="otherInterfaces">The other interfaces.</param>
         /// <returns></returns>
-        public static Type BuildType(Type contextType, Type mainInterface, params Type[] otherInterfaces)
+        public static Type BuildType(Type contextType,
+            Type mainInterface,
+#if NETFRAMEWORK
+            System.Security.PermissionSet permissions=null,
+#endif
+            params Type[] otherInterfaces)
         {
             lock (TypeCacheLock)
             {
@@ -145,7 +150,11 @@ namespace MarshalByRefProxy.Build
                 Type tType;
                 if (!_typeHash.TryGetValue(tNewHash, out tType))
                 {
-                    tType = BuildTypeHelper(Builder,contextType,new[]{mainInterface}.Concat(otherInterfaces).ToArray());
+#if NETFRAMEWORK
+                    tType = BuildTypeHelper(Builder, contextType, permissions, new[]{mainInterface}.Concat(otherInterfaces).ToArray());
+#else
+                    tType = BuildTypeHelper(Builder, contextType, new[]{mainInterface}.Concat(otherInterfaces).ToArray());
+#endif
                     _typeHash[tNewHash] = tType;
                 }
 
@@ -153,8 +162,12 @@ namespace MarshalByRefProxy.Build
             }
 
         }
-
-        public static Type BuildType(Type contextType)
+        
+        public static Type BuildType(Type contextType
+#if NETFRAMEWORK
+            , System.Security.PermissionSet permissions=null
+#endif
+            )
         {
             lock (TypeCacheLock)
             {
@@ -163,7 +176,11 @@ namespace MarshalByRefProxy.Build
                 Type tType;
                 if (!_typeHash.TryGetValue(tNewHash, out tType))
                 {
+#if NETFRAMEWORK
+                    tType = BuildTypeHelper(Builder, contextType, permissions, new Type[] { });
+#else
                     tType = BuildTypeHelper(Builder, contextType, new Type[] { });
+#endif
                     _typeHash[tNewHash] = tType;
                 }
 
@@ -178,7 +195,11 @@ namespace MarshalByRefProxy.Build
         /// <param name="contextType">Type of the context.</param>
         /// <param name="informalInterface">The informal interface.</param>
         /// <returns></returns>
-        public static Type BuildType(Type contextType, IDictionary<string,Type> informalInterface)
+        public static Type BuildType(Type contextType, IDictionary<string,Type> informalInterface
+#if NETFRAMEWORK
+            , System.Security.PermissionSet permissions=null
+#endif
+            )
         {
             lock (TypeCacheLock)
             {
@@ -186,7 +207,12 @@ namespace MarshalByRefProxy.Build
                 Type tType;
                 if (!_typeHash.TryGetValue(tNewHash, out tType))
                 {
+#if NETFRAMEWORK
+                    tType = BuildTypeHelper(Builder, contextType, informalInterface, permissions);
+#else
                     tType = BuildTypeHelper(Builder, contextType, informalInterface);
+#endif
+
 
                     _typeHash[tNewHash] = tType;
                 }
@@ -262,15 +288,20 @@ namespace MarshalByRefProxy.Build
             return tSuccess;
         }
 
-        private static Type BuildTypeHelper(ModuleBuilder builder, Type contextType, IDictionary<string,Type> informalInterface)
+        private static Type BuildTypeHelper(ModuleBuilder builder, Type contextType, IDictionary<string, Type> informalInterface
+#if NETFRAMEWORK
+            , System.Security.PermissionSet permissions=null
+#endif
+           )
         {
-
-
             var tB = builder.DefineType(
                 string.Format("MarshalByRefAs_{0}_{1}", "InformalInterface", Guid.NewGuid().ToString("N")), TypeAttributes.Public | TypeAttributes.Class,
                 typeof(MarshalByRefAsProxy));
 
-
+#if NETFRAMEWORK
+            if (permissions != null)
+                tB.AddDeclarativeSecurity(System.Security.Permissions.SecurityAction.Assert, permissions);
+#endif
 
 
             foreach (var tInterface in informalInterface)
@@ -339,13 +370,23 @@ namespace MarshalByRefProxy.Build
             }
         }
 
-        private static Type BuildTypeHelper(ModuleBuilder builder,Type contextType,params Type[] interfaces)
+        private static Type BuildTypeHelper(ModuleBuilder builder, Type contextType,
+#if NETFRAMEWORK
+            System.Security.PermissionSet permissions=null,
+#endif
+            params Type[] interfaces
+            )
         {
-
+            
             var tInterfacesMainList = interfaces.Distinct().ToArray();
             var tB = builder.DefineType(
                 string.Format("AMarshalByRefAs_{0}_{1}", tInterfacesMainList.Count() > 0 ? tInterfacesMainList.First().Name : "", Guid.NewGuid().ToString("N")), TypeAttributes.Public | TypeAttributes.Class,
                 typeof(MarshalByRefAsProxy), tInterfacesMainList);
+            
+#if NETFRAMEWORK
+            if (permissions != null)
+                tB.AddDeclarativeSecurity(System.Security.Permissions.SecurityAction.Assert, permissions);
+#endif
 
             tB.SetCustomAttribute(
                 new CustomAttributeBuilder(typeof(MarshalByRefAsProxyAttribute).GetConstructor(new[]{typeof(Type).MakeArrayType(),typeof(Type)}),
@@ -541,7 +582,7 @@ namespace MarshalByRefProxy.Build
         private static void MakeMethod(ModuleBuilder builder,MethodInfo info, TypeBuilder typeBuilder, Type contextType, bool nonRecursive= false, bool defaultImp =true)
         {
 
-
+            
             var tEmitInfo = new MethodEmitInfo {Name = info.Name, DefaultInterfaceImplementation = defaultImp, NonRecursive = nonRecursive};
 
             var alias = info.GetCustomAttributes(typeof(AliasAttribute), false).FirstOrDefault() as AliasAttribute;
@@ -1754,7 +1795,7 @@ namespace MarshalByRefProxy.Build
                     tName,
                     access);
 
-#if NET40
+#if NETFRAMEWORK
             if (access== AssemblyBuilderAccess.RunAndSave || access == AssemblyBuilderAccess.Save)
                 mb = ab.DefineDynamicModule("MainModule", string.Format("{0}.dll", tName.Name));
             else

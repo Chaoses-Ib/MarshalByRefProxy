@@ -17,7 +17,7 @@ namespace UnitTestImpromptuInterface
         }
     }
 
-    public class Helper:AssertionHelper
+    public class Helper : AssertionHelper
     {
         public WriteLineContext TestContext
         {

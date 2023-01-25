@@ -44,10 +44,14 @@ namespace MarshalByRefProxy.Build
         public object GetRealObject(StreamingContext context)
         {
 		   var tInterfaces = Interfaces ?? MonoInterfaces.Select(it=>Type.GetType(it)).ToArray();
-           var tType =BuildProxy.BuildType(Context, tInterfaces.First(), tInterfaces.Skip(1).ToArray());
-           return MarshalByRefProxy.InitializeProxy(tType, Original, tInterfaces);
+#if NETFRAMEWORK
+            var tType = BuildProxy.BuildType(Context, tInterfaces.First(), null, tInterfaces.Skip(1).ToArray());
+#else
+            var tType = BuildProxy.BuildType(Context, tInterfaces.First(), tInterfaces.Skip(1).ToArray());
+#endif
+            return MarshalByRefProxy.InitializeProxy(tType, Original, tInterfaces);
         }
-
+        
     }
 #endif
 }

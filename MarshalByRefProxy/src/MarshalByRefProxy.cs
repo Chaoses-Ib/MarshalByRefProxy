@@ -69,15 +69,22 @@ namespace MarshalByRefProxy
         /// <param name="originalDynamic">The original object can be annoymous type, System.DynamicObject as well as any others.</param>
         /// <param name="otherInterfaces">Optional other interfaces.</param>
         /// <returns></returns>
-        public static TInterface MarshalByRefAs<TInterface>(this object originalDynamic, params Type[] otherInterfaces) where TInterface : class
+        public static TInterface MarshalByRefAs<TInterface>(this object originalDynamic,
+#if NETFRAMEWORK
+            System.Security.PermissionSet permissions=null,
+#endif
+            params Type[] otherInterfaces) where TInterface : class
         {
             Type tContext;
             bool tDummy;
             originalDynamic = originalDynamic.GetTargetContext(out tContext, out tDummy);
             tContext = tContext.FixContext();
 
-            var tProxy = BuildProxy.BuildType(tContext, typeof(TInterface), otherInterfaces);
-
+#if NETFRAMEWORK
+            var tProxy = BuildProxy.BuildType(tContext, typeof(TInterface), permissions, otherInterfaces);
+#else
+            var tProxy = BuildProxy.BuildType(tContext, typeof(TInterface), otherInterfaces);   
+#endif
 
 
             return
@@ -109,9 +116,17 @@ namespace MarshalByRefProxy
         /// <param name="originalDynamic">The original dynamic.</param>
         /// <param name="otherInterfaces">The other interfaces.</param>
         /// <returns></returns>
-        public static dynamic MarshalByRefAs(this object originalDynamic, params Type[] otherInterfaces)
+        public static dynamic MarshalByRefAs(this object originalDynamic,
+#if NETFRAMEWORK
+            System.Security.PermissionSet permissions=null,
+#endif 
+            params Type[] otherInterfaces)
         {
+#if NETFRAMEWORK
+            return new MarshalByRefAsCaster(originalDynamic, otherInterfaces, permissions);
+#else
             return new MarshalByRefAsCaster(originalDynamic, otherInterfaces);
+#endif
         }
 
 
@@ -132,16 +147,23 @@ namespace MarshalByRefProxy
         /// <param name="originalDynamic">The original dynamic.</param>
         /// <param name="propertySpec">The property spec.</param>
         /// <returns></returns>
-        public static dynamic MarshalByRefAsProperties(this object originalDynamic, IDictionary<string, Type> propertySpec)
+        public static dynamic MarshalByRefAsProperties(this object originalDynamic,
+            IDictionary<string, Type> propertySpec
+#if NETFRAMEWORK
+            , System.Security.PermissionSet permissions=null
+#endif
+            )
         {
             Type tContext;
             bool tDummy;
             originalDynamic = originalDynamic.GetTargetContext(out tContext, out tDummy);
             tContext = tContext.FixContext();
 
+#if NETFRAMEWORK
+            var tProxy = BuildProxy.BuildType(tContext, propertySpec, permissions);
+#else
             var tProxy = BuildProxy.BuildType(tContext, propertySpec);
-
-
+#endif
 
             return
                 InitializeProxy(tProxy, originalDynamic, propertySpec: propertySpec);
@@ -170,9 +192,17 @@ namespace MarshalByRefProxy
         /// <param name="originalDynamic">The original dynamic.</param>
         /// <param name="otherInterfaces">The other interfaces.</param>
         /// <returns></returns>
-        public static IEnumerable<TInterface> AllMarshalByRefAs<TInterface>(this IEnumerable<object> originalDynamic, params Type[] otherInterfaces) where TInterface : class
+        public static IEnumerable<TInterface> AllMarshalByRefAs<TInterface>(this IEnumerable<object> originalDynamic,
+#if NETFRAMEWORK
+            System.Security.PermissionSet permissions=null,
+#endif
+            params Type[] otherInterfaces) where TInterface : class
         {
+#if NETFRAMEWORK
+            return originalDynamic.Select(it => it.MarshalByRefAs<TInterface>(permissions, otherInterfaces));
+#else
             return originalDynamic.Select(it => it.MarshalByRefAs<TInterface>(otherInterfaces));
+#endif
         }
 
         /// <summary>
@@ -181,14 +211,22 @@ namespace MarshalByRefProxy
         /// <param name="originalDynamic">The original dynamic.</param>
         /// <param name="otherInterfaces">The other interfaces.</param>
         /// <returns></returns>
-        public static dynamic DynamicMarshalByRefAs(object originalDynamic, params Type[] otherInterfaces)
+        public static dynamic DynamicMarshalByRefAs(object originalDynamic,
+#if NETFRAMEWORK
+            System.Security.PermissionSet permissions=null,
+#endif
+            params Type[] otherInterfaces)
         {
             Type tContext;
             bool tDummy;
             originalDynamic = originalDynamic.GetTargetContext(out tContext, out tDummy);
             tContext = tContext.FixContext();
 
+#if NETFRAMEWORK
+            var tProxy = BuildProxy.BuildType(tContext, otherInterfaces.First(), permissions, otherInterfaces.Skip(1).ToArray());
+#else
             var tProxy = BuildProxy.BuildType(tContext, otherInterfaces.First(), otherInterfaces.Skip(1).ToArray());
+#endif
 
             return InitializeProxy(tProxy, originalDynamic, otherInterfaces);
 

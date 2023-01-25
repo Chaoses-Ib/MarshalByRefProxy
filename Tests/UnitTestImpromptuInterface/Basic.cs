@@ -183,7 +183,7 @@ namespace UnitTestImpromptuInterface
             tNew.Prop3 = Guid.NewGuid();
             tNew.ReturnProp = new PropPoco();
 
-            IInheritProp tActsLike = MarshalByRefProxy.MarshalByRefProxy.MarshalByRefAs<IInheritProp>(tNew, typeof(ISimpeleClassProps));
+            IInheritProp tActsLike = MarshalByRefProxy.MarshalByRefProxy.MarshalByRefAs<IInheritProp>(tNew, null, typeof(ISimpeleClassProps));
 
 
 
@@ -277,7 +277,7 @@ namespace UnitTestImpromptuInterface
             tNew.Prop3 = Guid.NewGuid();
             tNew.ReturnProp = new PropPoco();
 
-            IInheritProp tActsLike = MarshalByRefProxy.MarshalByRefProxy.MarshalByRefAs<IInheritProp>(tNew, typeof(IPropPocoProp));
+            IInheritProp tActsLike = MarshalByRefProxy.MarshalByRefProxy.MarshalByRefAs<IInheritProp>(tNew, null, typeof(IPropPocoProp));
 
 
 
@@ -295,20 +295,20 @@ namespace UnitTestImpromptuInterface
             dynamic tNew = new ExpandoObject();
             tNew.Event = 3;
 
-            IEventCollisions tActsLike = MarshalByRefProxy.MarshalByRefProxy.MarshalByRefAs<IEventCollisions>(tNew, typeof(IEvent));
+            IEventCollisions tActsLike = MarshalByRefProxy.MarshalByRefProxy.MarshalByRefAs<IEventCollisions>(tNew, null, typeof(IEvent));
 
 
             Assert.AreEqual(tNew.Event, tActsLike.Event);
         }
-
+        
         [Test]
         public void InterfaceDirectDuplicateTest()
         {
 
             dynamic tNew = new ExpandoObject();
             tNew.StartsWith = new Func<string, bool>(x => true);
-
-            ISimpleStringMethod tActsLike = MarshalByRefProxy.MarshalByRefProxy.MarshalByRefAs<ISimpleStringMethod>(tNew, typeof(ISimpleStringMethod));
+            
+            ISimpleStringMethod tActsLike = MarshalByRefProxy.MarshalByRefProxy.MarshalByRefAs<ISimpleStringMethod>(tNew, null, typeof(ISimpleStringMethod));
 
 
             Assert.AreEqual(tNew.StartsWith("test"), tActsLike.StartsWith("test"));
@@ -321,12 +321,12 @@ namespace UnitTestImpromptuInterface
             dynamic tNew = new ExpandoObject();
             tNew.StartsWith = new Func<string, bool>(x => true);
 
-            ISimpleStringMethod tActsLike = MarshalByRefProxy.MarshalByRefProxy.MarshalByRefAs<ISimpleStringMethod>(tNew, typeof(ISimpleStringMethodCollision));
+            ISimpleStringMethod tActsLike = MarshalByRefProxy.MarshalByRefProxy.MarshalByRefAs<ISimpleStringMethod>(tNew, null, typeof(ISimpleStringMethodCollision));
             Assert.AreEqual(tNew.StartsWith("test"), tActsLike.StartsWith("test"));
 
             dynamic tNew2 = new ExpandoObject();
             tNew2.StartsWith = new Func<string, int>(x => 5);
-            ISimpleStringMethodCollision tActsLike2 = MarshalByRefProxy.MarshalByRefProxy.MarshalByRefAs<ISimpleStringMethod>(tNew2, typeof(ISimpleStringMethodCollision));
+            ISimpleStringMethodCollision tActsLike2 = MarshalByRefProxy.MarshalByRefProxy.MarshalByRefAs<ISimpleStringMethod>(tNew2, null, typeof(ISimpleStringMethodCollision));
 
             Assert.AreEqual(tNew2.StartsWith("test"), tActsLike2.StartsWith("test"));
         }

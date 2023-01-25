@@ -69,6 +69,15 @@ public async Task TestTask()
 ```
 Why can we await `IAwaitable`? Because C# can await any [awaitable expressions](https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/language-specification/expressions#11882-awaitable-expressions), which is exactly what `IAwaitable` stands for.
 
+## Permissions (.NET Framework only)
+Assert unrestricted permissions:
+```csharp
+using System.Security;
+using System.Security.Permissions;
+
+new UnmarshallableClass().MarshalByRefAs<IProxyInterface>(new PermissionSet(PermissionState.Unrestricted));
+```
+
 ## Todos
 - [ ] `IAwaitable<T>`
 - [ ] MarshalByRefWrapper Code Generators
